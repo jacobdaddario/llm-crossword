@@ -1,9 +1,8 @@
-import { Actions } from "@/components/crossword/Actions";
-import { ClueList } from "@/components/crossword/ClueList";
-import { PuzzleFrame } from "@/components/crossword/PuzzleFrame";
-import { Crossword } from "@/types/crossword.types";
 import { readFile } from "node:fs/promises";
 import { cwd } from "node:process";
+
+import { PuzzleContext } from "@/components/crossword/PuzzleContext";
+import type { Crossword } from "@/types/crossword.types";
 
 type NextJSParams = {
   slug: string;
@@ -21,16 +20,5 @@ export default async function PuzzlePage({ params }: PuzzlePageParams) {
     }),
   );
 
-  return (
-    <div className="flex justify-center space-x-16 w-full max-h-min">
-      <div className="p-2 shrink-0">
-        <PuzzleFrame puzzleDef={puzzleDef} />
-        <Actions />
-      </div>
-      <div className="flex mt-28 space-x-6">
-        <ClueList direction="across" clues={puzzleDef.clues.across} />
-        <ClueList direction="down" clues={puzzleDef.clues.down} />
-      </div>
-    </div>
-  );
+  return <PuzzleContext puzzleDef={puzzleDef} />;
 }

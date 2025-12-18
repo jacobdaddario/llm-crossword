@@ -25,11 +25,14 @@ export function Puzzle({ grid, numbers, dimension }: PuzzleParams) {
     return (
       <div key={idx} className="flex justify-center max-w-min">
         {gridRow.map((gridValue, jdx) => {
+          const gridIndex = idx * dimension.rows + jdx;
+
           return (
             <Square
+              gridIndex={gridIndex}
               blackedOut={gridValue[0] === "."}
               number={gridValue[1]}
-              key={idx + jdx}
+              key={gridIndex}
             />
           );
         })}
