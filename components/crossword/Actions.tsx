@@ -1,18 +1,18 @@
 "use client";
 
 import { CheckSquare2Icon } from "lucide-react";
-import { useContext, type Dispatch, type SetStateAction } from "react";
+import { useContext } from "react";
 
-import { GridContext } from "./PuzzleContext";
+import { GridContext, GridCorrectnessWriterContext } from "./PuzzleContext";
 import { CrosswordGrid } from "@/types/crossword.types";
 
 type ActionsParams = {
   answers: CrosswordGrid;
-  setGridCorrectness: Dispatch<SetStateAction<(boolean | undefined)[]>>;
 };
 
-export function Actions({ answers, setGridCorrectness }: ActionsParams) {
+export function Actions({ answers }: ActionsParams) {
   const gridState = useContext(GridContext);
+  const setGridCorrectness = useContext(GridCorrectnessWriterContext);
 
   const checkGrid = () => {
     const gridCorrectness = Array(answers.length);

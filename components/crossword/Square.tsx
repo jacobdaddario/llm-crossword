@@ -5,6 +5,7 @@ import { useContext } from "react";
 import {
   GridContext,
   GridCorrectnessContext,
+  GridCorrectnessWriterContext,
   GridWriterContext,
 } from "./PuzzleContext";
 import type { CrosswordGridNumber } from "@/types/crossword.types";
@@ -23,6 +24,7 @@ export function Square({
   const gridState = useContext(GridContext);
   const gridWriter = useContext(GridWriterContext);
   const gridCorrectness = useContext(GridCorrectnessContext);
+  const gridCorrectnessWriter = useContext(GridCorrectnessWriterContext);
 
   const gridValue = gridState[gridIndex];
   const correctSquare = gridCorrectness[gridIndex];
@@ -40,6 +42,7 @@ export function Square({
         <input
           value={gridValue}
           maxLength={1}
+          onFocus={() => gridCorrectnessWriter(Array(gridState.length))}
           onChange={(e) => {
             gridWriter((grid) => {
               const nextGrid = [...grid];
@@ -48,7 +51,7 @@ export function Square({
               return nextGrid;
             });
           }}
-          className="outline-none max-w-full text-center"
+          className="outline-none max-w-full text-center uppercase"
         ></input>
       )}
     </div>
