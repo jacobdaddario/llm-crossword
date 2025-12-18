@@ -8,7 +8,7 @@ type SquareParams = {
 
 export function Square({ blackedOut = false, number }: SquareParams) {
   return (
-    <div className="relative flex items-end size-8 -m-px border border-black empty:bg-black">
+    <div className="relative flex items-end size-8 -ml-px -mt-px border border-black empty:bg-black">
       {number && !blackedOut && (
         <span className="absolute left-0.5 top-0.5 text-xs">{number}</span>
       )}
