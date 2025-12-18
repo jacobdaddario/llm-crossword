@@ -18,7 +18,11 @@ export function PuzzleFrame({ puzzleDef }: PuzzleFrameParams) {
           By <em>{puzzleDef.author}</em> - <time>{puzzleDef.date}</time>
         </p>
       </div>
-      <Puzzle grid={puzzleDef.grid} dimension={puzzleDef.size} />
+      <Puzzle
+        grid={puzzleDef.grid}
+        numbers={puzzleDef.gridnums}
+        dimension={puzzleDef.size}
+      />
     </div>
   );
 }
