@@ -56,7 +56,7 @@ async function getPuzzles(): Promise<CrosswordMenuItem[]> {
       );
 
       return {
-        path: `/puzzle/${puzzleFile}`,
+        path: `/puzzles/${puzzleFile}`,
         name: crossWordData.title,
       };
     },
