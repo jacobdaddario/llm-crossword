@@ -56,7 +56,7 @@ async function getPuzzles(): Promise<CrosswordMenuItem[]> {
       );
 
       return {
-        path: `/puzzles/${puzzleFile}`,
+        path: `/puzzles/${puzzleFile.replace(".json", "")}`,
         name: crossWordData.title,
       };
     },
@@ -78,8 +78,8 @@ export default async function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased h-screen`}
       >
         <SidebarProvider open={true}>
-          <div className="flex h-screen">
-            <Sidebar>
+          <div className="flex h-full w-full overflow-x-hidden">
+            <Sidebar variant="inset">
               <SidebarContent>
                 <SidebarGroup>
                   <SidebarGroupLabel>Available Puzzles</SidebarGroupLabel>

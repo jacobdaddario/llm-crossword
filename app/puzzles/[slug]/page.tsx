@@ -1,6 +1,7 @@
-"use client";
-
-import { use } from "react";
+import { Square } from "@/components/crossword/Square";
+import { Crossword } from "@/types/crossword.types";
+import { readFile } from "node:fs/promises";
+import { cwd } from "node:process";
 
 type NextJSParams = {
   slug: string;
@@ -10,8 +11,20 @@ type PuzzleParams = {
   params: Promise<NextJSParams>;
 };
 
-export default function Puzzle({ params }: PuzzleParams) {
-  const { slug } = use(params);
+export default async function Puzzle({ params }: PuzzleParams) {
+  const { slug } = await params;
+  const puzzleDef: Crossword = JSON.parse(
+    await readFile(`${cwd()}/crosswords/${slug}.json`, {
+      encoding: "utf8",
+    }),
+  );
 
-  return <div>{slug}</div>;
+  return (
+    <div className="max-h-screen w-full">
+      <div className="mx-auto max-w-5xl p-2">
+        <Square blackedOut={true} />
+        <Square number={1} />
+      </div>
+    </div>
+  );
 }
