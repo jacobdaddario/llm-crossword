@@ -29,7 +29,9 @@ export const GridCorrectnessContext = createContext<(boolean | undefined)[]>(
 
 export function PuzzleContext({ puzzleDef }: PuzzleContextParams) {
   const gridLength = puzzleDef.grid.length;
-  const [gridState, setGridState] = useState<CrosswordGrid>(Array(gridLength));
+  const [gridState, setGridState] = useState<CrosswordGrid>(
+    Array(gridLength).fill(""),
+  );
   const [gridCorrectness, setGridCorrectness] = useState<
     (boolean | undefined)[]
   >(Array(gridLength));

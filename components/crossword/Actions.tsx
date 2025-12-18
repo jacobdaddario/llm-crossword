@@ -18,10 +18,10 @@ export function Actions({ answers, setGridCorrectness }: ActionsParams) {
     const gridCorrectness = Array(answers.length);
 
     gridState.forEach((cellValue, idx) => {
-      if (cellValue === ".") {
+      if (answers[idx] === ".") {
         gridCorrectness[idx] = undefined;
       } else {
-        gridCorrectness[idx] = gridState[idx] === answers[idx];
+        gridCorrectness[idx] = cellValue === answers[idx]?.toLowerCase();
       }
     });
 

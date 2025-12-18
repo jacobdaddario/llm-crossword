@@ -1,7 +1,6 @@
 "use client";
 
 import { useContext } from "react";
-import clsx from "clsx";
 
 import {
   GridContext,
@@ -29,7 +28,11 @@ export function Square({
   const correctSquare = gridCorrectness[gridIndex];
 
   return (
-    <div className="relative flex items-end size-8 -ml-px -mt-px border border-black empty:bg-black">
+    <div
+      className="relative flex items-end size-8 -ml-px -mt-px border border-black empty:bg-black data-correct:bg-green-200 data-false:bg-red-300"
+      {...(correctSquare === true ? { "data-correct": "" } : {})}
+      {...(correctSquare === false ? { "data-false": "" } : {})}
+    >
       {number !== 0 && !blackedOut && (
         <span className="absolute left-0.5 top-0 text-[8px]">{number}</span>
       )}
@@ -39,16 +42,13 @@ export function Square({
           maxLength={1}
           onChange={(e) => {
             gridWriter((grid) => {
-              grid[gridIndex] = e.target.value;
+              const nextGrid = [...grid];
+              nextGrid[gridIndex] = e.target.value;
 
-              return grid;
+              return nextGrid;
             });
           }}
-          className={clsx({
-            "outline-none max-w-full text-center": true,
-            "bg-green-200": correctSquare === true,
-            "bg-red-300": correctSquare === false,
-          })}
+          className="outline-none max-w-full text-center"
         ></input>
       )}
     </div>
