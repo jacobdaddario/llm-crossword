@@ -17,7 +17,7 @@ export function Puzzle({ grid, dimension }: PuzzleParams) {
 
   return chunkedGrid.map((gridRow, idx) => {
     return (
-      <div key={idx} className="flex justify-center">
+      <div key={idx} className="flex justify-center max-w-min">
         {gridRow.map((gridValue, jdx) => {
           return <Square blackedOut={gridValue === "."} key={idx + jdx} />;
         })}
