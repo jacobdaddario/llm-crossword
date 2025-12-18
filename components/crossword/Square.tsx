@@ -1,8 +1,14 @@
 "use client";
 
-import type { CrosswordGridNumber } from "@/types/crossword.types";
 import { useContext } from "react";
-import { GridContext, GridWriterContext } from "./PuzzleContext";
+import clsx from "clsx";
+
+import {
+  GridContext,
+  GridCorrectnessContext,
+  GridWriterContext,
+} from "./PuzzleContext";
+import type { CrosswordGridNumber } from "@/types/crossword.types";
 
 type SquareParams = {
   gridIndex: number;
@@ -17,7 +23,10 @@ export function Square({
 }: SquareParams) {
   const gridState = useContext(GridContext);
   const gridWriter = useContext(GridWriterContext);
+  const gridCorrectness = useContext(GridCorrectnessContext);
+
   const gridValue = gridState[gridIndex];
+  const correctSquare = gridCorrectness[gridIndex];
 
   return (
     <div className="relative flex items-end size-8 -ml-px -mt-px border border-black empty:bg-black">
@@ -35,7 +44,11 @@ export function Square({
               return grid;
             });
           }}
-          className="outline-none max-w-full text-center"
+          className={clsx({
+            "outline-none max-w-full text-center": true,
+            "bg-green-200": correctSquare === true,
+            "bg-red-300": correctSquare === false,
+          })}
         ></input>
       )}
     </div>

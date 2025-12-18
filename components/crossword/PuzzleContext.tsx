@@ -23,20 +23,28 @@ export const GridWriterContext = createContext<
   Dispatch<SetStateAction<CrosswordGrid>>
 >(() => {});
 
-export const GridCorrectnessContext = createContext<boolean[]>([]);
+export const GridCorrectnessContext = createContext<(boolean | undefined)[]>(
+  [],
+);
 
 export function PuzzleContext({ puzzleDef }: PuzzleContextParams) {
   const gridLength = puzzleDef.grid.length;
   const [gridState, setGridState] = useState<CrosswordGrid>(Array(gridLength));
+  const [gridCorrectness, setGridCorrectness] = useState<
+    (boolean | undefined)[]
+  >(Array(gridLength));
 
   return (
     <div className="flex justify-center space-x-16 w-full max-h-min">
       <div className="p-2 shrink-0">
         <GridContext value={gridState}>
           <GridWriterContext value={setGridState}>
-            <GridCorrectnessContext value={Array(gridLength)}>
+            <GridCorrectnessContext value={gridCorrectness}>
               <PuzzleFrame puzzleDef={puzzleDef} />
-              <Actions />
+              <Actions
+                answers={puzzleDef.grid}
+                setGridCorrectness={setGridCorrectness}
+              />
             </GridCorrectnessContext>
           </GridWriterContext>
         </GridContext>
