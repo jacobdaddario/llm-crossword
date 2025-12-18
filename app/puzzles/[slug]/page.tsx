@@ -22,7 +22,7 @@ export default async function PuzzlePage({ params }: PuzzlePageParams) {
   );
 
   return (
-    <div className="flex justify-center space-x-16 w-full max-h-min mt-12">
+    <div className="flex justify-center space-x-16 w-full max-h-min">
       <div className="p-2 shrink-0">
         <PuzzleFrame puzzleDef={puzzleDef} />
         <Actions />
