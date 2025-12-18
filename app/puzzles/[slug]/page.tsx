@@ -1,3 +1,4 @@
+import { Actions } from "@/components/crossword/Actions";
 import { ClueList } from "@/components/crossword/ClueList";
 import { PuzzleFrame } from "@/components/crossword/PuzzleFrame";
 import { Crossword } from "@/types/crossword.types";
@@ -24,6 +25,7 @@ export default async function PuzzlePage({ params }: PuzzlePageParams) {
     <div className="flex justify-center space-x-16 w-full max-h-min mt-12">
       <div className="p-2 shrink-0">
         <PuzzleFrame puzzleDef={puzzleDef} />
+        <Actions />
       </div>
       <div className="flex mt-28 space-x-6">
         <ClueList direction="across" clues={puzzleDef.clues.across} />
