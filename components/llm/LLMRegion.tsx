@@ -11,7 +11,22 @@ import {
 import { Thought } from "@/components/llm/Thought";
 import { Content } from "@/components/llm/Content";
 import { ToolInvocation } from "@/components/llm/ToolInvocation";
-import { useCrosswordAgent } from "@/hooks/use-crossword-agent";
+import {
+  type AgentTransaction,
+  useCrosswordAgent,
+} from "@/hooks/use-crossword-agent";
+
+function renderTransaction(transaction: AgentTransaction): React.ReactNode {
+  let renderedComponent: React.ReactNode;
+
+  switch (transaction.type) {
+    case "content":
+      renderedComponent = <Content>{transaction.text}</Content>;
+      break;
+  }
+
+  return renderedComponent;
+}
 
 export function LLMRegion({}) {
   const { response } = useCrosswordAgent({ model: "gpt-oss:20b" });
@@ -29,7 +44,12 @@ export function LLMRegion({}) {
           className="w-xl max-h-192 flex flex-col-reverse overflow-y-auto"
         >
           <div className="px-2 py-4">
-            <Content>{response}</Content>
+            {response.map((transaction: AgentTransaction, idx: number) => {
+              // NOTE: Typically using idx is not a good practice with `key`, but in this case,
+              // the rendered content _must_ remain ordered to be correct, so the index should
+              // be a stable key.
+              return <div key={idx}>{renderTransaction(transaction)}</div>;
+            })}
           </div>
         </PopoverContent>
       </Popover>

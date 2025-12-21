@@ -2,8 +2,17 @@ import { useEffect, useState } from "react";
 import ollama, { type Message } from "ollama/browser";
 
 type CrosswordAgent = {
-  response: string;
+  response: AgentTrace;
 };
+
+type AgentTransactionTypes = "content" | "thought" | "tool_call";
+
+export type AgentTransaction = {
+  type: AgentTransactionTypes;
+  text: string;
+};
+
+type AgentTrace = AgentTransaction[];
 
 type AvailableModels = "gpt-oss:20b" | "gpt-oss:120b";
 
@@ -20,12 +29,25 @@ const initialMessages: Message[] = [
   },
 ];
 
+function updateTransaction(transaction: AgentTransaction, newChunk: string) {
+  return {
+    ...transaction,
+    text: transaction.text + newChunk,
+  };
+}
+
+function updateTrace(trace: AgentTrace, newChunk: string) {
+  return [...trace.slice(0, -1), updateTransaction(trace.at(-1)!, newChunk)];
+}
+
 export function useCrosswordAgent({
   model,
 }: {
   model: AvailableModels;
 }): CrosswordAgent {
-  const [response, setResponse] = useState("");
+  const [response, setResponse] = useState<AgentTrace>([
+    { type: "content", text: "" },
+  ]);
 
   useEffect(() => {
     const messageHistory: Message[] = initialMessages;
@@ -42,21 +64,16 @@ export function useCrosswordAgent({
         let thinking = "";
         let content = "";
         for await (const chunk of stream) {
-          if (chunk.message.thinking) {
-            setResponse((prevValue) => {
-              return prevValue + chunk.message.thinking;
-            });
+          // if (chunk.message.content) {
+          setResponse((prevValue) => {
+            return updateTrace(
+              prevValue,
+              chunk.message.thinking || "" + chunk.message.content || "",
+            );
+          });
 
-            thinking += chunk.message.thinking;
-          }
-
-          if (chunk.message.content) {
-            setResponse((prevValue) => {
-              return prevValue + chunk.message.content;
-            });
-
-            content += chunk.message.content;
-          }
+          content += chunk.message.content;
+          // }
         }
         console.log(messageHistory);
         messageHistory.push(
