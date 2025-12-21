@@ -1,4 +1,13 @@
+import {
+  CrosswordClueLists,
+  CrosswordGrid,
+  CrosswordGridCell,
+  CrosswordGridNumber,
+  CrosswordGridNumbers,
+} from "@/types/crossword.types";
+import { zip } from "lodash";
 import { Tool } from "ollama/browser";
+import { Dispatch, SetStateAction } from "react";
 
 export const tools: Tool[] = [
   {
@@ -73,3 +82,22 @@ export const tools: Tool[] = [
     },
   },
 ];
+
+export const read_current_clue = () => {};
+
+export const read_board_state = (
+  boardState: CrosswordGrid,
+  gridNumbers: CrosswordGridNumbers,
+): [CrosswordGridNumber | undefined, CrosswordGridCell | undefined][] => {
+  return zip(gridNumbers, boardState);
+};
+
+export const list_all_clues = (clues: CrosswordClueLists) => {
+  return clues;
+};
+
+export const jump_to_clue = () => {};
+
+export const fill_current_clue = () => {};
+
+export const check_puzzle = () => {};
