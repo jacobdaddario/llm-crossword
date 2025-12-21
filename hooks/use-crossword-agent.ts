@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import ollama, { type Message } from "ollama/browser";
+import ollama, { type ToolCall, type Message } from "ollama/browser";
+import { tools } from "@/components/llm/tools";
 
 type CrosswordAgent = {
   response: AgentTrace;
@@ -10,7 +11,7 @@ type AgentTransactionTypes = "content" | "thought" | "tool_call";
 
 export type AgentTransaction = {
   type: AgentTransactionTypes;
-  text: string;
+  text: string | ToolCall;
 };
 
 type AgentTrace = AgentTransaction[];
@@ -25,8 +26,7 @@ const initialMessages: Message[] = [
   },
   {
     role: "user",
-    content:
-      "Tell me about a different place in the world. Start with anywhere you choose.",
+    content: "Use one of your available tools.",
   },
 ];
 
@@ -51,7 +51,9 @@ function updateTransaction(transaction: AgentTransaction, newChunk: string) {
 function updateTrace(trace: AgentTrace, newChunk: AgentTransaction) {
   const mostRecentTrace = trace.at(-1);
 
-  return mostRecentTrace?.type === newChunk.type
+  // NOTE: Tool calls all get their own trace.
+  return mostRecentTrace?.type !== "tool_call" &&
+    mostRecentTrace?.type === newChunk.type
     ? [...trace.slice(0, -1), updateTransaction(mostRecentTrace, newChunk.text)]
     : [...trace, newChunk];
 }
@@ -79,15 +81,17 @@ export function useCrosswordAgent({
         const stream = await ollama.chat({
           model: modelSnapshot.current,
           messages: messageHistory,
+          tools: tools,
           think: "medium",
           stream: true,
         });
 
         let aggregatedThinking = "";
         let aggregatedContent = "";
+        const aggregatedToolCalls: ToolCall[] = [];
 
         for await (const chunk of stream) {
-          const { thinking, content } = chunk.message;
+          const { thinking, content, tool_calls } = chunk.message;
 
           if (content) {
             setTrace((prevValue) => {
@@ -110,6 +114,19 @@ export function useCrosswordAgent({
 
             aggregatedThinking += thinking;
           }
+
+          if (tool_calls) {
+            tool_calls.forEach((toolCall) => {
+              setTrace((prevValue) => {
+                return updateTrace(prevValue, {
+                  text: toolCall,
+                  type: "tool_call",
+                });
+              });
+            });
+
+            aggregatedToolCalls.push(...tool_calls);
+          }
         }
 
         messageHistory.push(
@@ -117,8 +134,12 @@ export function useCrosswordAgent({
             role: "assistant",
             content: aggregatedContent,
             thinking: aggregatedThinking,
+            tool_calls: aggregatedToolCalls,
           },
-          { role: "user", content: "Excellent, tell me about somewhere else." },
+          {
+            role: "user",
+            content: "Continue trying to solve the puzzle until a full solve.",
+          },
         );
       }
     })();

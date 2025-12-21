@@ -16,16 +16,26 @@ import {
   type AgentTransaction,
   useCrosswordAgent,
 } from "@/hooks/use-crossword-agent";
+import type { ToolCall } from "ollama/browser";
 
 function renderTransaction(transaction: AgentTransaction): React.ReactNode {
   let renderedComponent: React.ReactNode;
 
   switch (transaction.type) {
     case "thought":
-      renderedComponent = <Thought>{transaction.text}</Thought>;
+      renderedComponent = <Thought>{transaction.text as string}</Thought>;
       break;
     case "content":
-      renderedComponent = <Content>{transaction.text}</Content>;
+      renderedComponent = <Content>{transaction.text as string}</Content>;
+      break;
+    case "tool_call":
+      const toolCall = transaction.text as ToolCall;
+
+      renderedComponent = (
+        <ToolInvocation toolName={toolCall.function.name}>
+          {JSON.stringify(toolCall, null, 2)}
+        </ToolInvocation>
+      );
       break;
   }
 
@@ -53,7 +63,11 @@ export function LLMRegion({}) {
               // NOTE: Typically using idx is not a good practice with `key`, but in this case,
               // the rendered content _must_ remain ordered to be correct, so the index should
               // be a stable key.
-              return <div key={idx}>{renderTransaction(transaction)}</div>;
+              return (
+                <div key={idx} className="mt-4 first:mt-0">
+                  {renderTransaction(transaction)}
+                </div>
+              );
             })}
 
             <div className="absolute bottom-0 inset-x-0 pt-3.5 bg-white border-t border-gray-300 flex justify-end items-center">
