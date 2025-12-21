@@ -54,7 +54,10 @@ function updateTrace(trace: AgentTrace, newChunk: AgentTransaction) {
   // NOTE: Tool calls all get their own trace.
   return mostRecentTrace?.type !== "tool_call" &&
     mostRecentTrace?.type === newChunk.type
-    ? [...trace.slice(0, -1), updateTransaction(mostRecentTrace, newChunk.text)]
+    ? [
+        ...trace.slice(0, -1),
+        updateTransaction(mostRecentTrace, newChunk.text as string),
+      ]
     : [...trace, newChunk];
 }
 
