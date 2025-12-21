@@ -8,6 +8,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/Popover";
 
+import { AgentToggle } from "@/components/llm/AgentToggle";
 import { Thought } from "@/components/llm/Thought";
 import { Content } from "@/components/llm/Content";
 import { ToolInvocation } from "@/components/llm/ToolInvocation";
@@ -32,27 +33,32 @@ function renderTransaction(transaction: AgentTransaction): React.ReactNode {
 }
 
 export function LLMRegion({}) {
-  const { response } = useCrosswordAgent({ model: "gpt-oss:20b" });
+  const { response, toggleAgent } = useCrosswordAgent({ model: "gpt-oss:20b" });
 
   return (
-    <div className="absolute bottom-8 right-12">
-      <Popover defaultOpen={true}>
+    <div className="absolute space-x-2 bottom-8 right-12">
+      <Popover>
         <PopoverTrigger asChild>
           <Button>
             <SparklesIcon />
           </Button>
         </PopoverTrigger>
+
         <PopoverContent
           align="end"
-          className="w-xl max-h-192 flex flex-col-reverse overflow-y-auto"
+          className="w-xl max-h-168 flex flex-col-reverse overflow-y-auto"
         >
-          <div className="px-2 py-4">
+          <div className="relative px-2 pt-4 pb-16">
             {response.map((transaction: AgentTransaction, idx: number) => {
               // NOTE: Typically using idx is not a good practice with `key`, but in this case,
               // the rendered content _must_ remain ordered to be correct, so the index should
               // be a stable key.
               return <div key={idx}>{renderTransaction(transaction)}</div>;
             })}
+
+            <div className="absolute bottom-0 inset-x-0 pt-3.5 bg-white border-t border-gray-300 flex justify-end items-center">
+              <AgentToggle onClick={toggleAgent} />
+            </div>
           </div>
         </PopoverContent>
       </Popover>

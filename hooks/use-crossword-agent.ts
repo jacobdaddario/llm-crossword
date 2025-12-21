@@ -3,6 +3,7 @@ import ollama, { type Message } from "ollama/browser";
 
 type CrosswordAgent = {
   response: AgentTrace;
+  toggleAgent: () => void;
 };
 
 type AgentTransactionTypes = "content" | "thought" | "tool_call";
@@ -29,6 +30,17 @@ const initialMessages: Message[] = [
   },
 ];
 
+// HACK: This might be a really dumb way of doing this, but I don't see any way to synchronously wait
+// on the client. GPT suggested this. Seems like clever use of `Promise` to basicaly force `setTimeout`
+// to be syncrhonous. There's probably a better way to do this, but it's beyond me, and this is good enough.
+async function pollingDelay() {
+  await new Promise<void>((resolve) => {
+    setTimeout(() => {
+      resolve();
+    }, 2000);
+  });
+}
+
 function updateTransaction(transaction: AgentTransaction, newChunk: string) {
   return {
     ...transaction,
@@ -50,14 +62,20 @@ export function useCrosswordAgent({
   model: AvailableModels;
 }): CrosswordAgent {
   const [trace, setTrace] = useState<AgentTrace>([]);
+  const runningRef = useRef(false);
   const modelSnapshot = useRef<AvailableModels>(model);
 
   useEffect(() => {
     const messageHistory: Message[] = initialMessages;
-    let counter = 0;
 
     (async () => {
-      while (counter < 3) {
+      while (true) {
+        if (!runningRef.current) {
+          await pollingDelay();
+
+          continue;
+        }
+
         const stream = await ollama.chat({
           model: modelSnapshot.current,
           messages: messageHistory,
@@ -102,10 +120,14 @@ export function useCrosswordAgent({
           },
           { role: "user", content: "Excellent, tell me about somewhere else." },
         );
-        counter += 1;
       }
     })();
   }, []);
 
-  return { response: trace };
+  return {
+    response: trace,
+    toggleAgent: () => {
+      runningRef.current = !runningRef.current;
+    },
+  };
 }
