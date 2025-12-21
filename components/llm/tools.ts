@@ -6,8 +6,19 @@ import {
   CrosswordGridNumbers,
 } from "@/types/crossword.types";
 import { zip } from "lodash";
-import { Tool } from "ollama/browser";
-import { Dispatch, SetStateAction } from "react";
+import { Message, Tool, ToolCall } from "ollama/browser";
+
+type AgentState = {
+  clueList: CrosswordClueLists;
+  gridNums: CrosswordGridNumbers;
+  gridState: CrosswordGrid;
+};
+
+export type ToolInvocationMessage = Message & {
+  role: "tool";
+  tool_name: string;
+  content: string;
+};
 
 export const tools: Tool[] = [
   {
@@ -83,21 +94,55 @@ export const tools: Tool[] = [
   },
 ];
 
-export const read_current_clue = () => {};
+const read_current_clue = () => {};
 
-export const read_board_state = (
+const read_board_state = (
   boardState: CrosswordGrid,
   gridNumbers: CrosswordGridNumbers,
 ): [CrosswordGridNumber | undefined, CrosswordGridCell | undefined][] => {
   return zip(gridNumbers, boardState);
 };
 
-export const list_all_clues = (clues: CrosswordClueLists) => {
+const list_all_clues = (clues: CrosswordClueLists) => {
   return clues;
 };
 
-export const jump_to_clue = () => {};
+const jump_to_clue = () => {};
 
-export const fill_current_clue = () => {};
+const fill_current_clue = () => {};
 
-export const check_puzzle = () => {};
+const check_puzzle = () => {};
+
+export const processToolInvocations = (
+  toolCalls: ToolCall[],
+  { clueList, gridNums, gridState }: AgentState,
+): ToolInvocationMessage[] => {
+  const results: ToolInvocationMessage[] = [];
+
+  toolCalls.forEach((toolCall) => {
+    const pushToolResult = (content: string) => {
+      results.push({
+        role: "tool",
+        tool_name: toolCall.function.name,
+        content,
+      });
+    };
+
+    switch (toolCall.function.name) {
+      case "read_board_state":
+        pushToolResult(
+          JSON.stringify(read_board_state(gridState, gridNums), null, 2),
+        );
+        debugger;
+        break;
+      case "list_all_clues":
+        pushToolResult(JSON.stringify(list_all_clues(clueList), null, 2));
+        break;
+      default:
+        pushToolResult("Unknown tool call");
+        break;
+    }
+  });
+
+  return results;
+};

@@ -1,6 +1,17 @@
-import { useEffect, useRef, useState } from "react";
+import { type Context, useContext, useEffect, useRef, useState } from "react";
 import ollama, { type ToolCall, type Message } from "ollama/browser";
-import { tools } from "@/components/llm/tools";
+
+import { processToolInvocations, tools } from "@/components/llm/tools";
+import {
+  GridNumbersContext,
+  GridCluesContext,
+  GridContext,
+} from "@/components/crossword/PuzzleContext";
+
+import type {
+  CrosswordClueLists,
+  CrosswordGridNumbers,
+} from "@/types/crossword.types";
 
 type CrosswordAgent = {
   response: AgentTrace;
@@ -26,7 +37,8 @@ const initialMessages: Message[] = [
   },
   {
     role: "user",
-    content: "Use one of your available tools.",
+    content:
+      "Use list_all_clues tool, then report what you see to the user. Do you know where these clues are from?",
   },
 ];
 
@@ -61,13 +73,35 @@ function updateTrace(trace: AgentTrace, newChunk: AgentTransaction) {
     : [...trace, newChunk];
 }
 
+function usePollPuzzleState<T>(context: Context<T>) {
+  const observeredState = useContext(context);
+
+  const contextRef = useRef(observeredState);
+  // NOTE: Updating the ref on state changes. This allows the agent loop to not have
+  // any react dependencies while still having up to date data.
+  useEffect(() => {
+    contextRef.current = observeredState;
+  }, [observeredState]);
+
+  return contextRef;
+}
+
 export function useCrosswordAgent({
   model,
 }: {
   model: AvailableModels;
 }): CrosswordAgent {
   const [trace, setTrace] = useState<AgentTrace>([]);
+
   const runningRef = useRef(false);
+  const gridStateRef = usePollPuzzleState(GridContext);
+
+  const gridNumsSnapshot = useRef<CrosswordGridNumbers>(
+    useContext(GridNumbersContext),
+  );
+  const clueListSnapshot = useRef<CrosswordClueLists>(
+    useContext(GridCluesContext),
+  );
   const modelSnapshot = useRef<AvailableModels>(model);
 
   useEffect(() => {
@@ -143,6 +177,14 @@ export function useCrosswordAgent({
             role: "user",
             content: "Continue trying to solve the puzzle until a full solve.",
           },
+        );
+
+        messageHistory.push(
+          ...processToolInvocations(aggregatedToolCalls, {
+            clueList: clueListSnapshot.current,
+            gridNums: gridNumsSnapshot.current,
+            gridState: gridStateRef.current,
+          }),
         );
       }
     })();

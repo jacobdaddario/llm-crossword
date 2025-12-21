@@ -8,6 +8,8 @@ import {
   PopoverTrigger,
 } from "@/components/ui/Popover";
 
+import type { ToolCall } from "ollama/browser";
+
 import { AgentToggle } from "@/components/llm/AgentToggle";
 import { Thought } from "@/components/llm/Thought";
 import { Content } from "@/components/llm/Content";
@@ -16,7 +18,6 @@ import {
   type AgentTransaction,
   useCrosswordAgent,
 } from "@/hooks/use-crossword-agent";
-import type { ToolCall } from "ollama/browser";
 
 function renderTransaction(transaction: AgentTransaction): React.ReactNode {
   let renderedComponent: React.ReactNode;
@@ -42,7 +43,7 @@ function renderTransaction(transaction: AgentTransaction): React.ReactNode {
   return renderedComponent;
 }
 
-export function LLMRegion({}) {
+export function LLMRegion() {
   const { response, toggleAgent } = useCrosswordAgent({ model: "gpt-oss:20b" });
 
   return (

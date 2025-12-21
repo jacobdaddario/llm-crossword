@@ -18,8 +18,6 @@ import {
 } from "@/components/ui/Sidebar";
 import Link from "next/link";
 
-import { LLMRegion } from "@/components/llm/LLMRegion";
-
 import type { Crossword } from "@/types/crossword.types";
 
 const geistSans = Geist({
@@ -108,8 +106,6 @@ export default async function RootLayout({
             </Sidebar>
 
             <main className="flex-1 overflow-y-auto">{children}</main>
-
-            <LLMRegion />
           </div>
         </SidebarProvider>
       </body>
