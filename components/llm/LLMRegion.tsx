@@ -20,6 +20,9 @@ function renderTransaction(transaction: AgentTransaction): React.ReactNode {
   let renderedComponent: React.ReactNode;
 
   switch (transaction.type) {
+    case "thought":
+      renderedComponent = <Thought>{transaction.text}</Thought>;
+      break;
     case "content":
       renderedComponent = <Content>{transaction.text}</Content>;
       break;
