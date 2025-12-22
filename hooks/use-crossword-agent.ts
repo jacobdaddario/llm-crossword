@@ -52,6 +52,7 @@ const repeatedInstructions = `
 - Prioritize fact-based clues first. Then use their answers to help with vague clues.
 - Sometimes when a player feels that they might not be have the correct answer for a square, they will use the check grid tool.
 - Tight cycles are essential.
+- If you want to give up, consider checking to see what answers are correct.
 `;
 
 const initialMessages: Message[] = [
@@ -161,6 +162,7 @@ export function useCrosswordAgent({
             stream: true,
             options: {
               num_ctx: 16_384,
+              num_predict: 1024,
             },
           });
         } catch {
@@ -242,7 +244,7 @@ Continue trying to solve. You have all the time in the world. You can work as lo
           },
         );
 
-        if (messageHistory.length > 16) {
+        if (messageHistory.length > 12) {
           messageHistory.shift();
         }
       }
