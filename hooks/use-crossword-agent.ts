@@ -161,7 +161,7 @@ export function useCrosswordAgent({
             think: "low",
             stream: true,
             options: {
-              num_ctx: 16_384,
+              num_ctx: 12_276,
               num_predict: 1024,
             },
           });
@@ -239,12 +239,12 @@ export function useCrosswordAgent({
             role: "user",
             content: `
 ${repeatedInstructions}
-Continue trying to solve. You have all the time in the world. You can work as long as necesssary. _ONLY ATTEMPT 1-2 CLUES AT A TIME_.
+Continue trying to solve. You have all the time in the world. You can work as long as necesssary. Consider trying clues that haven't been filled yet. Go to lower parts of the list, or try a different direction.
 `,
           },
         );
 
-        if (messageHistory.length > 12) {
+        while (messageHistory.length > 20) {
           messageHistory.shift();
         }
       }
