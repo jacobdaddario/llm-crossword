@@ -16,7 +16,6 @@ type AgentState = {
   clueList: CrosswordClueLists;
   gridNums: CrosswordGridNumbers;
   gridState: CrosswordGrid;
-  currentClue: CurrentClueIndex;
   setCurrentClue: Dispatch<SetStateAction<CurrentClueIndex>>;
   answers: CrosswordGrid;
   setGridCorrectness: Dispatch<SetStateAction<(boolean | undefined)[]>>;
@@ -102,7 +101,7 @@ const fill_clue = (
   direction: CrosswordClueDirection,
   clue_number: number,
   answer: string,
-) => {
+): string => {
   const currentClueArrayIndex = clueList[direction].findIndex((clue) =>
     // NOTE: I am making an assumption that the model will inconsistenly
     // return a period. If it doesn't I want to check for one to prevent
@@ -124,10 +123,16 @@ const fill_clue = (
 
   let index = startingSquareIndex;
   splitAnswer.forEach((char) => {
+    if (gridState[index] === ".") {
+      return "Answer too long. Failed to write full answer. Partially persisted.";
+    }
+
     gridState[index] = char;
 
     index += jumpSize;
   });
+
+  return "Answer successfully written.";
 };
 
 const check_puzzle = (
@@ -156,7 +161,6 @@ export const processToolInvocations = (
     clueList,
     gridNums,
     gridState,
-    currentClue,
     setCurrentClue,
     answers,
     setGridCorrectness,
@@ -178,11 +182,26 @@ export const processToolInvocations = (
         pushToolResult(
           JSON.stringify(read_board_state(gridState, gridNums), null, 2),
         );
-        debugger;
         break;
       case "list_all_clues":
         pushToolResult(JSON.stringify(list_all_clues(clueList), null, 2));
         break;
+      case "fill_clue": {
+        const { direction, clue_number, answer } = toolCall.function.arguments;
+
+        const reuslt = fill_clue(
+          setCurrentClue,
+          gridState,
+          gridNums,
+          clueList,
+          direction as CrosswordClueDirection,
+          clue_number,
+          answer,
+        );
+
+        pushToolResult(result);
+        break;
+      }
       case "check_puzzle":
         pushToolResult(
           JSON.stringify(

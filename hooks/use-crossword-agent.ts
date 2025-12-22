@@ -36,13 +36,20 @@ type AvailableModels = "gpt-oss:20b" | "gpt-oss:120b";
 const initialMessages: Message[] = [
   {
     role: "system",
-    content:
-      "Do not use tables or LaTEX notation. The rendrer cannot proces those blocks. Be brief.",
+    content: `
+## Overview
+You are a crossword solving agent. Your job is to solve a crossword until completion. Typical crossword rules apply.
+
+## Imperatives
+- Do not use tables or LaTEX notation.
+- Be brief in your turns. Do not try to solve every clue at once.
+- Use your tools to modify the crossword state.
+- Only use letters to try and solve the puzzle.
+`,
   },
   {
     role: "user",
-    content:
-      "Use list_all_clues tool, then report what you see to the user. Do you know where these clues are from?",
+    content: "The puzzle is blank. Please begin solving.",
   },
 ];
 
@@ -99,7 +106,6 @@ export function useCrosswordAgent({
 
   const runningRef = useRef(false);
   const gridStateRef = usePollPuzzleState(GridContext);
-  const currentClueRef = usePollPuzzleState(CurrentClueContext);
 
   const gridNumsSnapshot = useRef<CrosswordGridNumbers>(
     useContext(GridNumbersContext),
@@ -196,7 +202,6 @@ export function useCrosswordAgent({
             clueList: clueListSnapshot.current,
             gridNums: gridNumsSnapshot.current,
             gridState: gridStateRef.current,
-            currentClue: currentClueRef.current,
             setCurrentClue: currentClueSetterSnapshot.current,
             answers: answersSnapshot.current,
             setGridCorrectness: setGridCorrectnessSnapshot.current,
