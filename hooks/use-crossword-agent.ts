@@ -1,12 +1,15 @@
 import { type Context, useContext, useEffect, useRef, useState } from "react";
-import ollama, { type ToolCall, type Message } from "ollama/browser";
+import ollama, {
+  type ToolCall,
+  type Message,
+  type ChatResponse,
+} from "ollama/browser";
 
 import { processToolInvocations, tools } from "@/components/llm/tools";
 import {
   GridNumbersContext,
   GridCluesContext,
   GridContext,
-  CurrentClueContext,
   CurrentClueWriterContext,
   AnswersContext,
   GridCorrectnessWriterContext,
@@ -33,19 +36,15 @@ type AgentTrace = AgentTransaction[];
 
 type AvailableModels = "gpt-oss:20b" | "gpt-oss:120b";
 
-const initialMessages: Message[] = [
-  {
-    role: "system",
-    content: `
-## Overview
-You are a crossword solving agent. Your job is to solve a crossword until completion. Typical crossword rules apply.
-
+const repeatedInstructions = `
 ## Imperatives
 - Do not use tables or LaTEX notation.
 - Be brief in your turns. Do not try to solve every clue at once.
 - Use your tools to modify the crossword state.
 - Only use letters to try and solve the puzzle.
 - Do _NOT_ attempt to find the puzzle in training data. It's likely you will guess wrong.
+- You _MUST_ use the provided tools to solve the puzzle. Do _NOT_ just solve in internal state.
+- You _MUST_ solve 1-2 clues at a time. Do _NOT_ ruminate on solving the whole puzzle.
 
 ## Workflow
 - Select a clue from the list, and focus on that.
@@ -53,6 +52,16 @@ You are a crossword solving agent. Your job is to solve a crossword until comple
 - Attempt to fill in an answer if possible.
 - Otherwise, move to the next clue.
 - Typical crossword solving involves filling fact-based clues first, and then using the placed letters to consider possible answsers for vague clues.
+`;
+
+const initialMessages: Message[] = [
+  {
+    role: "system",
+    content: `
+## Overview
+You are a crossword solving agent. Your job is to solve a crossword until completion. Typical crossword rules apply.
+
+${repeatedInstructions}
 `,
   },
   {
@@ -141,13 +150,21 @@ export function useCrosswordAgent({
           continue;
         }
 
-        const stream = await ollama.chat({
-          model: modelSnapshot.current,
-          messages: messageHistory,
-          tools: tools,
-          think: "low",
-          stream: true,
-        });
+        // NOTE: Due to typing issues in ollama, I can't assign the proper type to this.
+        let stream;
+        try {
+          stream = await ollama.chat({
+            model: modelSnapshot.current,
+            messages: messageHistory,
+            tools: tools,
+            think: "low",
+            stream: true,
+          });
+        } catch (error) {
+          console.error("Error creating ollama chat stream:", error);
+          // Swallow error and continue loop
+          continue;
+        }
 
         let aggregatedThinking = "";
         let aggregatedContent = "";
@@ -201,7 +218,10 @@ export function useCrosswordAgent({
           },
           {
             role: "user",
-            content: "Continue trying to solve the puzzle until a full solve.",
+            content: `
+${repeatedInstructions}
+Continue trying to solve. You have all the time in the world. You can work as long as necessasry.
+`,
           },
         );
 

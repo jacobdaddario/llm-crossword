@@ -44,7 +44,9 @@ function renderTransaction(transaction: AgentTransaction): React.ReactNode {
 }
 
 export function LLMRegion() {
-  const { response, toggleAgent } = useCrosswordAgent({ model: "gpt-oss:20b" });
+  const { response, toggleAgent } = useCrosswordAgent({
+    model: "gpt-oss:120b",
+  });
 
   return (
     <div className="absolute space-x-2 bottom-8 right-12">
