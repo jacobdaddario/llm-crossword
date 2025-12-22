@@ -1,9 +1,5 @@
 import { type Context, useContext, useEffect, useRef, useState } from "react";
-import ollama, {
-  type ToolCall,
-  type Message,
-  type ChatResponse,
-} from "ollama/browser";
+import ollama, { type ToolCall, type Message } from "ollama/browser";
 
 import { processToolInvocations, tools } from "@/components/llm/tools";
 import {
@@ -161,6 +157,9 @@ export function useCrosswordAgent({
             tools: tools,
             think: "low",
             stream: true,
+            options: {
+              num_ctx: 8_192,
+            },
           });
         } catch {
           // Swallow error and continue loop
@@ -236,6 +235,10 @@ Continue trying to solve. You have all the time in the world. You can work as lo
             setGridCorrectness: setGridCorrectnessSnapshot.current,
           }),
         );
+
+        if (messageHistory.length > 12) {
+          messageHistory.shift();
+        }
       }
     })();
   }, []);

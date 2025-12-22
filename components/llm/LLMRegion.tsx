@@ -59,7 +59,7 @@ export function LLMRegion() {
 
         <PopoverContent
           align="end"
-          className="w-xl max-h-168 flex flex-col-reverse overflow-y-auto"
+          className="w-xl max-h-132 flex flex-col-reverse overflow-y-auto"
         >
           <div className="relative px-2 pt-4 pb-16">
             {response.map((transaction: AgentTransaction, idx: number) => {
