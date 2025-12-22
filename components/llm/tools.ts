@@ -155,7 +155,8 @@ const check_puzzle = (
     if (answers[idx] === ".") {
       gridCorrectness[idx] = undefined;
     } else {
-      gridCorrectness[idx] = cellValue === answers[idx]?.toLowerCase();
+      gridCorrectness[idx] =
+        cellValue.toLowerCase() === answers[idx]?.toLowerCase();
     }
   });
 
