@@ -220,7 +220,7 @@ export function useCrosswordAgent({
             role: "user",
             content: `
 ${repeatedInstructions}
-Continue trying to solve. You have all the time in the world. You can work as long as necessasry.
+Continue trying to solve. You have all the time in the world. You can work as long as necesssary. _ONLY ATTEMPT 1-2 CLUES AT A TIME_.
 `,
           },
         );

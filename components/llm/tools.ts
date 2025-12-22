@@ -77,7 +77,7 @@ export const tools: Tool[] = [
     type: "function",
     function: {
       name: "check_puzzle",
-      description: "Checkes the entire completed crossword grid.",
+      description: "Checks the entire completed crossword grid.",
     },
   },
 ];
@@ -105,12 +105,14 @@ const fill_clue = (
   clue_number: number,
   answer: string,
 ): string => {
-  const currentClueArrayIndex = clueList[direction].findIndex((clue) =>
+  const currentClueArrayIndex = clueList[direction].findIndex((clue) => {
     // NOTE: I am making an assumption that the model will inconsistenly
     // return a period. If it doesn't I want to check for one to prevent
     // false positive matches.
-    clue.match(new RegExp(`\A${clue_number}\.?`)),
-  );
+    const clueRegex = new RegExp(`${clue_number}\.?`);
+
+    return clueRegex.test(clue);
+  });
 
   setCurrentClue({ direction, arrayIndex: currentClueArrayIndex });
 
