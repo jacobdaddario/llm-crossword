@@ -52,6 +52,8 @@ const repeatedInstructions = `
 - Attempt to fill in an answer if possible.
 - Otherwise, move to the next clue.
 - Typical crossword solving involves filling fact-based clues first, and then using the placed letters to consider possible answsers for vague clues.
+- Sometimes when a player feels that they might not be have the correct answer for a square, they will use the check grid tool.
+- Tight cycles are essential.
 `;
 
 const initialMessages: Message[] = [
@@ -160,8 +162,7 @@ export function useCrosswordAgent({
             think: "low",
             stream: true,
           });
-        } catch (error) {
-          console.error("Error creating ollama chat stream:", error);
+        } catch {
           // Swallow error and continue loop
           continue;
         }

@@ -105,37 +105,41 @@ const fill_clue = (
   clue_number: number,
   answer: string,
 ): string => {
-  const currentClueArrayIndex = clueList[direction].findIndex((clue) => {
-    // NOTE: I am making an assumption that the model will inconsistenly
-    // return a period. If it doesn't I want to check for one to prevent
-    // false positive matches.
-    const clueRegex = new RegExp(`${clue_number}\.?`);
+  try {
+    const currentClueArrayIndex = clueList[direction].findIndex((clue) => {
+      // NOTE: I am making an assumption that the model will inconsistenly
+      // return a period. If it doesn't I want to check for one to prevent
+      // false positive matches.
+      const clueRegex = new RegExp(`${clue_number}\.?`);
 
-    return clueRegex.test(clue);
-  });
+      return clueRegex.test(clue);
+    });
 
-  setCurrentClue({ direction, arrayIndex: currentClueArrayIndex });
+    setCurrentClue({ direction, arrayIndex: currentClueArrayIndex });
 
-  const gridWithNumbers = zip(gridNumbers, gridState);
-  const startingSquareIndex = gridWithNumbers.findIndex(
-    (square) => square[0] === clue_number,
-  );
+    const gridWithNumbers = zip(gridNumbers, gridState);
+    const startingSquareIndex = gridWithNumbers.findIndex(
+      (square) => square[0] === clue_number,
+    );
 
-  const gridLength = Math.sqrt(gridState.length);
+    const gridLength = Math.sqrt(gridState.length);
 
-  const splitAnswer = answer.split("").map((char) => char.toUpperCase());
-  const jumpSize = direction === "across" ? 1 : gridLength;
+    const splitAnswer = answer.split("").map((char) => char.toUpperCase());
+    const jumpSize = direction === "across" ? 1 : gridLength;
 
-  let index = startingSquareIndex;
-  splitAnswer.forEach((char) => {
-    if (gridState[index] === ".") {
-      return "Answer too long. Failed to write full answer. Partially persisted.";
-    }
+    let index = startingSquareIndex;
+    splitAnswer.forEach((char) => {
+      if (gridState[index] === ".") {
+        return "Answer too long. Failed to write full answer. Partially persisted.";
+      }
 
-    gridState[index] = char;
+      gridState[index] = char;
 
-    index += jumpSize;
-  });
+      index += jumpSize;
+    });
+  } catch {
+    return "Failed to use tool successfully. Reconsider your inputs relative to tool definitions, and try again.";
+  }
 
   return "Answer successfully written.";
 };
