@@ -146,9 +146,14 @@ const fill_clue = (
 
 const check_puzzle = (
   gridState: CrosswordGrid,
+  gridNumbers: CrosswordGridNumbers,
   answers: CrosswordGrid,
   setGridCorrectness: Dispatch<SetStateAction<(boolean | undefined)[]>>,
-): (boolean | undefined)[] => {
+): [
+  CrosswordGridNumber | undefined,
+  CrosswordGridCell | undefined,
+  boolean | undefined,
+][][] => {
   const gridCorrectness = Array(answers.length);
 
   gridState.forEach((cellValue, idx) => {
@@ -162,7 +167,14 @@ const check_puzzle = (
 
   setGridCorrectness(gridCorrectness);
 
-  return gridCorrectness;
+  const gridCorrectnessVisualization = zip(
+    gridNumbers,
+    gridState,
+    gridCorrectness,
+  );
+  const gridLength = Math.sqrt(gridState.length);
+
+  return chunk(gridCorrectnessVisualization, gridLength);
 };
 
 export const processToolInvocations = (
@@ -215,7 +227,7 @@ export const processToolInvocations = (
       case "check_puzzle":
         pushToolResult(
           JSON.stringify(
-            check_puzzle(gridState, answers, setGridCorrectness),
+            check_puzzle(gridState, gridNums, answers, setGridCorrectness),
             null,
             2,
           ),
