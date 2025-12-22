@@ -15,6 +15,7 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
+  SidebarRail,
 } from "@/components/ui/Sidebar";
 import Link from "next/link";
 
@@ -77,7 +78,7 @@ export default async function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased h-screen relative`}
       >
-        <SidebarProvider open={true}>
+        <SidebarProvider>
           <div className="flex h-full w-full overflow-x-hidden">
             <Sidebar variant="inset">
               <SidebarContent>
@@ -103,6 +104,8 @@ export default async function RootLayout({
                   </SidebarGroupContent>
                 </SidebarGroup>
               </SidebarContent>
+
+              <SidebarRail />
             </Sidebar>
 
             <main className="flex-1 overflow-y-auto">{children}</main>
