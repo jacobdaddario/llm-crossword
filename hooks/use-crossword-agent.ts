@@ -6,6 +6,10 @@ import {
   GridNumbersContext,
   GridCluesContext,
   GridContext,
+  CurrentClueContext,
+  CurrentClueWriterContext,
+  AnswersContext,
+  GridCorrectnessWriterContext,
 } from "@/components/crossword/PuzzleContext";
 
 import type {
@@ -95,12 +99,20 @@ export function useCrosswordAgent({
 
   const runningRef = useRef(false);
   const gridStateRef = usePollPuzzleState(GridContext);
+  const currentClueRef = usePollPuzzleState(CurrentClueContext);
 
   const gridNumsSnapshot = useRef<CrosswordGridNumbers>(
     useContext(GridNumbersContext),
   );
   const clueListSnapshot = useRef<CrosswordClueLists>(
     useContext(GridCluesContext),
+  );
+  const answersSnapshot = useRef(useContext(AnswersContext));
+  const setGridCorrectnessSnapshot = useRef(
+    useContext(GridCorrectnessWriterContext),
+  );
+  const currentClueSetterSnapshot = useRef(
+    useContext(CurrentClueWriterContext),
   );
   const modelSnapshot = useRef<AvailableModels>(model);
 
@@ -184,6 +196,10 @@ export function useCrosswordAgent({
             clueList: clueListSnapshot.current,
             gridNums: gridNumsSnapshot.current,
             gridState: gridStateRef.current,
+            currentClue: currentClueRef.current,
+            setCurrentClue: currentClueSetterSnapshot.current,
+            answers: answersSnapshot.current,
+            setGridCorrectness: setGridCorrectnessSnapshot.current,
           }),
         );
       }
