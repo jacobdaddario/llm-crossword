@@ -237,7 +237,7 @@ Continue trying to solve. You have all the time in the world. You can work as lo
           }),
         );
 
-        if (messageHistory.length > 12) {
+        if (messageHistory.length > 16) {
           messageHistory.shift();
         }
       }
