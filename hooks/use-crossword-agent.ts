@@ -35,13 +35,14 @@ type AvailableModels = "gpt-oss:20b" | "gpt-oss:120b";
 const repeatedInstructions = `
 ## Imperatives
 - Do not use tables or LaTEX notation.
-- Be brief in your turns. Do not try to solve every clue at once.
 - Use your tools to modify the crossword state.
 - Only use letters to try and solve the puzzle.
 - Do _NOT_ attempt to find the puzzle in training data. It's likely you will guess wrong.
 - You _MUST_ use the provided tools to solve the puzzle. Do _NOT_ just solve in internal state.
 - You _MUST_ solve 1-2 clues at a time. Do _NOT_ ruminate on solving the whole puzzle.
 - If you begin reasoning for a long time, say to yourself: "I am not to solve every question at once. Let's move to the next clue."
+- Make sure to consider down clues as well as clues on later numbers.
+- Do not reply to the user directly. Spend your time considering answers in your chain of thought.
 
 ## Workflow
 - Select a clue from the list, and focus on that.
@@ -159,11 +160,12 @@ export function useCrosswordAgent({
             think: "low",
             stream: true,
             options: {
-              num_ctx: 8_192,
+              num_ctx: 16_384,
             },
           });
         } catch {
-          // Swallow error and continue loop
+          // Swallow error, let Ollama sort itself out..
+          await pollingDelay();
           continue;
         }
 
@@ -173,6 +175,12 @@ export function useCrosswordAgent({
 
         for await (const chunk of stream) {
           const { thinking, content, tool_calls } = chunk.message;
+
+          if (chunk.done) {
+            console.log(
+              `[TELEMETRY] Context Size: ${chunk.prompt_eval_count} tokens`,
+            );
+          }
 
           if (content) {
             setTrace((prevValue) => {
@@ -217,16 +225,6 @@ export function useCrosswordAgent({
             thinking: aggregatedThinking,
             tool_calls: aggregatedToolCalls,
           },
-          {
-            role: "user",
-            content: `
-${repeatedInstructions}
-Continue trying to solve. You have all the time in the world. You can work as long as necesssary. _ONLY ATTEMPT 1-2 CLUES AT A TIME_.
-`,
-          },
-        );
-
-        messageHistory.push(
           ...processToolInvocations(aggregatedToolCalls, {
             clueList: clueListSnapshot.current,
             gridNums: gridNumsSnapshot.current,
@@ -235,6 +233,13 @@ Continue trying to solve. You have all the time in the world. You can work as lo
             answers: answersSnapshot.current,
             setGridCorrectness: setGridCorrectnessSnapshot.current,
           }),
+          {
+            role: "user",
+            content: `
+${repeatedInstructions}
+Continue trying to solve. You have all the time in the world. You can work as long as necesssary. _ONLY ATTEMPT 1-2 CLUES AT A TIME_.
+`,
+          },
         );
 
         if (messageHistory.length > 16) {
