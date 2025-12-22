@@ -6,7 +6,7 @@ import {
   CrosswordGridNumber,
   CrosswordGridNumbers,
 } from "@/types/crossword.types";
-import { zip } from "lodash";
+import { chunk, zip } from "lodash";
 import { Message, Tool, ToolCall } from "ollama/browser";
 
 import type { CurrentClueIndex } from "@/components/crossword/PuzzleContext";
@@ -85,8 +85,11 @@ export const tools: Tool[] = [
 const read_board_state = (
   gridState: CrosswordGrid,
   gridNumbers: CrosswordGridNumbers,
-): [CrosswordGridNumber | undefined, CrosswordGridCell | undefined][] => {
-  return zip(gridNumbers, gridState);
+): [CrosswordGridNumber | undefined, CrosswordGridCell | undefined][][] => {
+  const gridLength = Math.sqrt(gridState.length);
+  const numberStatePair = zip(gridNumbers, gridState);
+
+  return chunk(numberStatePair, gridLength);
 };
 
 const list_all_clues = (clues: CrosswordClueLists) => {
@@ -189,7 +192,7 @@ export const processToolInvocations = (
       case "fill_clue": {
         const { direction, clue_number, answer } = toolCall.function.arguments;
 
-        const reuslt = fill_clue(
+        const result = fill_clue(
           setCurrentClue,
           gridState,
           gridNums,

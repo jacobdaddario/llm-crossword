@@ -45,6 +45,14 @@ You are a crossword solving agent. Your job is to solve a crossword until comple
 - Be brief in your turns. Do not try to solve every clue at once.
 - Use your tools to modify the crossword state.
 - Only use letters to try and solve the puzzle.
+- Do _NOT_ attempt to find the puzzle in training data. It's likely you will guess wrong.
+
+## Workflow
+- Select a clue from the list, and focus on that.
+- Consider solutions based on the surrounding state.
+- Attempt to fill in an answer if possible.
+- Otherwise, move to the next clue.
+- Typical crossword solving involves filling fact-based clues first, and then using the placed letters to consider possible answsers for vague clues.
 `,
   },
   {
@@ -137,7 +145,7 @@ export function useCrosswordAgent({
           model: modelSnapshot.current,
           messages: messageHistory,
           tools: tools,
-          think: "medium",
+          think: "low",
           stream: true,
         });
 
