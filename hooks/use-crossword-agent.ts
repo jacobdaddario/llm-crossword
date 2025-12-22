@@ -151,10 +151,8 @@ export function useCrosswordAgent({
           continue;
         }
 
-        // NOTE: Due to typing issues in ollama, I can't assign the proper type to this.
-        let stream;
         try {
-          stream = await ollama.chat({
+          const stream = await ollama.chat({
             model: modelSnapshot.current,
             messages: messageHistory,
             tools: tools,
@@ -165,87 +163,86 @@ export function useCrosswordAgent({
               num_predict: 1024,
             },
           });
+
+          let aggregatedThinking = "";
+          let aggregatedContent = "";
+          const aggregatedToolCalls: ToolCall[] = [];
+
+          for await (const chunk of stream) {
+            const { thinking, content, tool_calls } = chunk.message;
+
+            if (chunk.done) {
+              console.log(
+                `[TELEMETRY] Context Size: ${chunk.prompt_eval_count} tokens`,
+              );
+            }
+
+            if (content) {
+              setTrace((prevValue) => {
+                return updateTrace(prevValue, {
+                  text: content,
+                  type: "content",
+                });
+              });
+
+              aggregatedContent += content;
+            }
+
+            if (thinking) {
+              setTrace((prevValue) => {
+                return updateTrace(prevValue, {
+                  text: thinking,
+                  type: "thought",
+                });
+              });
+
+              aggregatedThinking += thinking;
+            }
+
+            if (tool_calls) {
+              tool_calls.forEach((toolCall) => {
+                setTrace((prevValue) => {
+                  return updateTrace(prevValue, {
+                    text: toolCall,
+                    type: "tool_call",
+                  });
+                });
+              });
+
+              aggregatedToolCalls.push(...tool_calls);
+            }
+          }
+          messageHistory.push(
+            {
+              role: "assistant",
+              content: aggregatedContent,
+              thinking: aggregatedThinking,
+              tool_calls: aggregatedToolCalls,
+            },
+            ...processToolInvocations(aggregatedToolCalls, {
+              clueList: clueListSnapshot.current,
+              gridNums: gridNumsSnapshot.current,
+              gridState: gridStateRef.current,
+              setCurrentClue: currentClueSetterSnapshot.current,
+              answers: answersSnapshot.current,
+              setGridCorrectness: setGridCorrectnessSnapshot.current,
+            }),
+            {
+              role: "user",
+              content: `
+  ${repeatedInstructions}
+  Continue trying to solve. You have all the time in the world. You can work as long as necesssary. Consider trying clues that haven't been filled yet. Go to lower parts of the list, or try a different direction.
+  `,
+            },
+          );
+
+          while (messageHistory.length > 20) {
+            messageHistory.shift();
+          }
         } catch {
           // Swallow error, let Ollama sort itself out..
           await pollingDelay();
           continue;
-        }
-
-        let aggregatedThinking = "";
-        let aggregatedContent = "";
-        const aggregatedToolCalls: ToolCall[] = [];
-
-        for await (const chunk of stream) {
-          const { thinking, content, tool_calls } = chunk.message;
-
-          if (chunk.done) {
-            console.log(
-              `[TELEMETRY] Context Size: ${chunk.prompt_eval_count} tokens`,
-            );
-          }
-
-          if (content) {
-            setTrace((prevValue) => {
-              return updateTrace(prevValue, {
-                text: content,
-                type: "content",
-              });
-            });
-
-            aggregatedContent += content;
-          }
-
-          if (thinking) {
-            setTrace((prevValue) => {
-              return updateTrace(prevValue, {
-                text: thinking,
-                type: "thought",
-              });
-            });
-
-            aggregatedThinking += thinking;
-          }
-
-          if (tool_calls) {
-            tool_calls.forEach((toolCall) => {
-              setTrace((prevValue) => {
-                return updateTrace(prevValue, {
-                  text: toolCall,
-                  type: "tool_call",
-                });
-              });
-            });
-
-            aggregatedToolCalls.push(...tool_calls);
-          }
-        }
-
-        messageHistory.push(
-          {
-            role: "assistant",
-            content: aggregatedContent,
-            thinking: aggregatedThinking,
-            tool_calls: aggregatedToolCalls,
-          },
-          ...processToolInvocations(aggregatedToolCalls, {
-            clueList: clueListSnapshot.current,
-            gridNums: gridNumsSnapshot.current,
-            gridState: gridStateRef.current,
-            setCurrentClue: currentClueSetterSnapshot.current,
-            answers: answersSnapshot.current,
-            setGridCorrectness: setGridCorrectnessSnapshot.current,
-          }),
-          {
-            role: "user",
-            content: `
-${repeatedInstructions}
-Continue trying to solve. You have all the time in the world. You can work as long as necesssary. Consider trying clues that haven't been filled yet. Go to lower parts of the list, or try a different direction.
-`,
-          },
-        );
-
-        while (messageHistory.length > 20) {
-          messageHistory.shift();
         }
       }
     })();
