@@ -41,13 +41,14 @@ const repeatedInstructions = `
 - Do _NOT_ attempt to find the puzzle in training data. It's likely you will guess wrong.
 - You _MUST_ use the provided tools to solve the puzzle. Do _NOT_ just solve in internal state.
 - You _MUST_ solve 1-2 clues at a time. Do _NOT_ ruminate on solving the whole puzzle.
+- If you begin reasoning for a long time, say to yourself: "I am not to solve every question at once. Let's move to the next clue."
 
 ## Workflow
 - Select a clue from the list, and focus on that.
 - Consider solutions based on the surrounding state.
 - Attempt to fill in an answer if possible.
 - Otherwise, move to the next clue.
-- Typical crossword solving involves filling fact-based clues first, and then using the placed letters to consider possible answsers for vague clues.
+- Prioritize fact-based clues first. Then use their answers to help with vague clues.
 - Sometimes when a player feels that they might not be have the correct answer for a square, they will use the check grid tool.
 - Tight cycles are essential.
 `;
