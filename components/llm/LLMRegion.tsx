@@ -18,6 +18,7 @@ import {
   type AgentTransaction,
   useCrosswordAgent,
 } from "@/hooks/use-crossword-agent";
+import { useEffect, useState } from "react";
 
 function renderTransaction(transaction: AgentTransaction): React.ReactNode {
   let renderedComponent: React.ReactNode;
@@ -47,6 +48,15 @@ export function LLMRegion() {
   const { response, toggleAgent } = useCrosswordAgent({
     model: "gpt-oss:120b",
   });
+  const [running, setRunning] = useState(false);
+
+  useEffect(() => {
+    toggleAgent(running);
+
+    return () => {
+      toggleAgent(false);
+    };
+  }, [running, toggleAgent]);
 
   return (
     <div className="absolute space-x-2 bottom-8 right-12">
@@ -74,7 +84,7 @@ export function LLMRegion() {
             })}
 
             <div className="absolute bottom-0 inset-x-0 pt-3.5 bg-white border-t border-gray-300 flex justify-end items-center">
-              <AgentToggle onClick={toggleAgent} />
+              <AgentToggle onClick={setRunning} running={running} />
             </div>
           </div>
         </PopoverContent>

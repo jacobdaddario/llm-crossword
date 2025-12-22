@@ -18,7 +18,7 @@ import type {
 
 type CrosswordAgent = {
   response: AgentTrace;
-  toggleAgent: () => void;
+  toggleAgent: (state: boolean) => void;
 };
 
 type AgentTransactionTypes = "content" | "thought" | "tool_call";
@@ -253,8 +253,8 @@ Continue trying to solve. You have all the time in the world. You can work as lo
 
   return {
     response: trace,
-    toggleAgent: () => {
-      runningRef.current = !runningRef.current;
+    toggleAgent: (state: boolean) => {
+      runningRef.current = state;
     },
   };
 }
