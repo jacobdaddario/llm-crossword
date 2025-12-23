@@ -98,6 +98,7 @@ const list_all_clues = (clues: CrosswordClueLists) => {
 
 const fill_clue = (
   setCurrentClue: Dispatch<SetStateAction<CurrentClueIndex>>,
+  setGridCorrectness: Dispatch<SetStateAction<(boolean | undefined)[]>>,
   gridState: CrosswordGrid,
   gridNumbers: CrosswordGridNumbers,
   clueList: CrosswordClueLists,
@@ -116,6 +117,7 @@ const fill_clue = (
     });
 
     setCurrentClue({ direction, arrayIndex: currentClueArrayIndex });
+    setGridCorrectness(Array(gridState.length ** 2).fill(undefined));
 
     const gridWithNumbers = zip(gridNumbers, gridState);
     const startingSquareIndex = gridWithNumbers.findIndex(
@@ -213,6 +215,7 @@ export const processToolInvocations = (
 
         const result = fill_clue(
           setCurrentClue,
+          setGridCorrectness,
           gridState,
           gridNums,
           clueList,
