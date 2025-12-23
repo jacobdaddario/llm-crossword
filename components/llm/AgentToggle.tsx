@@ -6,15 +6,11 @@ export function AgentToggle({
   onClick,
   running,
 }: {
-  onClick: Dispatch<SetStateAction<boolean>>;
+  onClick: () => void;
   running: boolean;
 }) {
   return (
-    <Button
-      onClick={() => {
-        onClick(!running);
-      }}
-    >
+    <Button onClick={onClick}>
       {running ? <StopCircle /> : <PlayCircle />}
     </Button>
   );

@@ -19,6 +19,7 @@ import {
   useCrosswordAgent,
 } from "@/hooks/use-crossword-agent";
 import { useEffect, useState } from "react";
+import { EmptyState } from "./EmptyState";
 
 function renderTransaction(transaction: AgentTransaction): React.ReactNode {
   let renderedComponent: React.ReactNode;
@@ -46,7 +47,7 @@ function renderTransaction(transaction: AgentTransaction): React.ReactNode {
 
 export function LLMRegion() {
   const { response, toggleAgent } = useCrosswordAgent({
-    model: "gpt-oss:120b",
+    model: "gpt-oss:20b",
   });
   const [running, setRunning] = useState(false);
 
@@ -72,19 +73,26 @@ export function LLMRegion() {
           className="w-xl max-h-132 flex flex-col-reverse overflow-y-auto"
         >
           <div className="relative px-2 pt-4 pb-16">
-            {response.map((transaction: AgentTransaction, idx: number) => {
-              // NOTE: Typically using idx is not a good practice with `key`, but in this case,
-              // the rendered content _must_ remain ordered to be correct, so the index should
-              // be a stable key.
-              return (
-                <div key={idx} className="mt-4 first:mt-0">
-                  {renderTransaction(transaction)}
-                </div>
-              );
-            })}
+            <div>
+              <EmptyState onClick={() => setRunning(true)} />
+
+              {response.map((transaction: AgentTransaction, idx: number) => {
+                // NOTE: Typically using idx is not a good practice with `key`, but in this case,
+                // the rendered content _must_ remain ordered to be correct, so the index should
+                // be a stable key.
+                return (
+                  <div key={idx} className="mt-4 first:mt-0">
+                    {renderTransaction(transaction)}
+                  </div>
+                );
+              })}
+            </div>
 
             <div className="absolute bottom-0 inset-x-0 pt-3.5 bg-white border-t border-gray-300 flex justify-end items-center">
-              <AgentToggle onClick={setRunning} running={running} />
+              <AgentToggle
+                onClick={() => setRunning(!running)}
+                running={running}
+              />
             </div>
           </div>
         </PopoverContent>
