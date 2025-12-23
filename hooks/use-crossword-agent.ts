@@ -242,9 +242,10 @@ export function useCrosswordAgent({
             messageHistory.shift();
           }
 
-          if (trace.length > 40) {
-            setTrace((prevValue) => prevValue.toSpliced(0, trace.length - 40));
-          }
+          setTrace((prevValue) => {
+            if (prevValue.length <= 40) return prevValue;
+            return prevValue.toSpliced(0, prevValue.length - 40);
+          });
         } catch {
           // Swallow error, let Ollama sort itself out..
           await pollingDelay();
