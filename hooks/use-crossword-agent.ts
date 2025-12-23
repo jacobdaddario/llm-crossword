@@ -236,8 +236,14 @@ export function useCrosswordAgent({
             },
           );
 
+          // NOTE: As sessions get long, it's important to not blow out the context on my machine
+          // or to blue out the state size in React.
           while (messageHistory.length > 20) {
             messageHistory.shift();
+          }
+
+          if (trace.length > 40) {
+            setTrace((prevValue) => prevValue.toSpliced(0, trace.length - 40));
           }
         } catch {
           // Swallow error, let Ollama sort itself out..
