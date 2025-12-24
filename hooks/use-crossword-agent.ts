@@ -253,7 +253,14 @@ export function useCrosswordAgent({
         }
       }
     })();
-  }, []);
+    // NOTE: In practice, this is a dependency-free effect. This will _never_ trigger a re-run. It is a
+    // totally stable value, as it is a ref. This is still a long-running effect that will never
+    // re-run, since its only dependency is stable. The react-hooks eslint rule is unable to discern
+    // that due to the use of a custom hook. I've opted to _not_ ignore the rule though so that I can
+    // continue to be guarded against accidentally enclosing state in this effect. That would be
+    // bad because either I'd be violating the exhaustive deps model (and obviously have stale state)
+    // or I would have to add it to this list, breaking the long-running effect model.
+  }, [gridStateRef]);
 
   return {
     response: trace,
