@@ -1,7 +1,7 @@
 import { type Context, useContext, useEffect, useRef, useState } from "react";
 import ollama, { type ToolCall, type Message } from "ollama/browser";
 
-import { processToolInvocations, tools } from "@/components/llm/tools";
+import { type ToolEvaluation, invokeTool, tools } from "@/components/llm/tools";
 import {
   GridNumbersContext,
   GridCluesContext,
@@ -21,11 +21,16 @@ type CrosswordAgent = {
   toggleAgent: (state: boolean) => void;
 };
 
-type AgentTransactionTypes = "content" | "thought" | "tool_call";
+type AgentTransactionTypes =
+  | "content"
+  | "thought"
+  | "tool_call"
+  | "tool_evaluation";
 
 export type AgentTransaction = {
   type: AgentTransactionTypes;
-  text: string | ToolCall;
+  text: string;
+  title?: string;
 };
 
 type AgentTrace = AgentTransaction[];
@@ -167,6 +172,7 @@ export function useCrosswordAgent({
           let aggregatedThinking = "";
           let aggregatedContent = "";
           const aggregatedToolCalls: ToolCall[] = [];
+          const aggregatedToolEvalutions: ToolEvaluation[] = [];
 
           for await (const chunk of stream) {
             const { thinking, content, tool_calls } = chunk.message;
@@ -203,8 +209,27 @@ export function useCrosswordAgent({
               tool_calls.forEach((toolCall) => {
                 setTrace((prevValue) => {
                   return updateTrace(prevValue, {
-                    text: toolCall,
+                    title: toolCall.function.name,
+                    text: JSON.stringify(toolCall.function.arguments, null, 2),
                     type: "tool_call",
+                  });
+                });
+
+                const toolEvaluation = invokeTool(toolCall, {
+                  clueList: clueListSnapshot.current,
+                  gridNums: gridNumsSnapshot.current,
+                  gridState: gridStateRef.current,
+                  setCurrentClue: currentClueSetterSnapshot.current,
+                  answers: answersSnapshot.current,
+                  setGridCorrectness: setGridCorrectnessSnapshot.current,
+                });
+                aggregatedToolEvalutions.push(toolEvaluation);
+
+                setTrace((prevValue) => {
+                  return updateTrace(prevValue, {
+                    title: toolCall.function.name,
+                    text: toolEvaluation.content,
+                    type: "tool_evaluation",
                   });
                 });
               });
@@ -212,6 +237,7 @@ export function useCrosswordAgent({
               aggregatedToolCalls.push(...tool_calls);
             }
           }
+
           messageHistory.push(
             {
               role: "assistant",
@@ -219,13 +245,11 @@ export function useCrosswordAgent({
               thinking: aggregatedThinking,
               tool_calls: aggregatedToolCalls,
             },
-            ...processToolInvocations(aggregatedToolCalls, {
-              clueList: clueListSnapshot.current,
-              gridNums: gridNumsSnapshot.current,
-              gridState: gridStateRef.current,
-              setCurrentClue: currentClueSetterSnapshot.current,
-              answers: answersSnapshot.current,
-              setGridCorrectness: setGridCorrectnessSnapshot.current,
+            ...aggregatedToolEvalutions.map<Message>((evaluation) => {
+              return {
+                role: "tool",
+                ...evaluation,
+              };
             }),
             {
               role: "user",

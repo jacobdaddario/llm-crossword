@@ -7,7 +7,7 @@ import {
   CrosswordGridNumbers,
 } from "@/types/crossword.types";
 import { chunk, zip } from "lodash";
-import { Message, Tool, ToolCall } from "ollama/browser";
+import { Tool, ToolCall } from "ollama/browser";
 
 import type { CurrentClueIndex } from "@/components/crossword/PuzzleContext";
 import { Dispatch, SetStateAction } from "react";
@@ -21,8 +21,7 @@ type AgentState = {
   setGridCorrectness: Dispatch<SetStateAction<(boolean | undefined)[]>>;
 };
 
-export type ToolInvocationMessage = Message & {
-  role: "tool";
+export type ToolEvaluation = {
   tool_name: string;
   content: string;
 };
@@ -179,8 +178,8 @@ const check_puzzle = (
   return chunk(gridCorrectnessVisualization, gridLength);
 };
 
-export const processToolInvocations = (
-  toolCalls: ToolCall[],
+export const invokeTool = (
+  toolCall: ToolCall,
   {
     clueList,
     gridNums,
@@ -189,60 +188,48 @@ export const processToolInvocations = (
     answers,
     setGridCorrectness,
   }: AgentState,
-): ToolInvocationMessage[] => {
-  const results: ToolInvocationMessage[] = [];
-
-  toolCalls.forEach((toolCall) => {
-    const pushToolResult = (content: string) => {
-      results.push({
-        role: "tool",
-        tool_name: toolCall.function.name,
-        content,
-      });
+): ToolEvaluation => {
+  const buildEvaluation = (content: string): ToolEvaluation => {
+    return {
+      content: content,
+      tool_name: toolCall.function.name,
     };
+  };
 
-    switch (toolCall.function.name) {
-      case "read_board_state":
-        pushToolResult(
-          JSON.stringify(read_board_state(gridState, gridNums), null, 2),
-        );
-        break;
-      case "list_all_clues":
-        pushToolResult(JSON.stringify(list_all_clues(clueList), null, 2));
-        break;
-      case "fill_clue": {
-        const { direction, clue_number, answer } = toolCall.function.arguments;
+  switch (toolCall.function.name) {
+    case "read_board_state":
+      return buildEvaluation(
+        JSON.stringify(read_board_state(gridState, gridNums), null, 2),
+      );
+    case "list_all_clues":
+      return buildEvaluation(JSON.stringify(list_all_clues(clueList), null, 2));
+    case "fill_clue": {
+      const { direction, clue_number, answer } = toolCall.function.arguments;
 
-        const result = fill_clue(
-          setCurrentClue,
-          setGridCorrectness,
-          gridState,
-          gridNums,
-          clueList,
-          direction as CrosswordClueDirection,
-          clue_number,
-          answer,
-        );
+      const result = fill_clue(
+        setCurrentClue,
+        setGridCorrectness,
+        gridState,
+        gridNums,
+        clueList,
+        direction as CrosswordClueDirection,
+        clue_number,
+        answer,
+      );
 
-        pushToolResult(result);
-        break;
-      }
-      case "check_puzzle":
-        pushToolResult(
-          JSON.stringify(
-            check_puzzle(gridState, gridNums, answers, setGridCorrectness),
-            null,
-            2,
-          ),
-        );
-        break;
-      default:
-        pushToolResult("Unknown tool call");
-        break;
+      return buildEvaluation(result);
     }
-  });
-
-  return results;
+    case "check_puzzle":
+      return buildEvaluation(
+        JSON.stringify(
+          check_puzzle(gridState, gridNums, answers, setGridCorrectness),
+          null,
+          2,
+        ),
+      );
+    default:
+      return buildEvaluation("Unknown tool call");
+  }
 };
 
 // NOTE: Hacky, but don't know where to put this function where both files can consume it.

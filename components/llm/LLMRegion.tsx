@@ -8,8 +8,6 @@ import {
   PopoverTrigger,
 } from "@/components/ui/Popover";
 
-import type { ToolCall } from "ollama/browser";
-
 import { AgentToggle } from "@/components/llm/AgentToggle";
 import { Thought } from "@/components/llm/Thought";
 import { Content } from "@/components/llm/Content";
@@ -20,23 +18,37 @@ import {
 } from "@/hooks/use-crossword-agent";
 import { useEffect, useState } from "react";
 import { EmptyState } from "./EmptyState";
+import { upperFirst } from "lodash";
 
 function renderTransaction(transaction: AgentTransaction): React.ReactNode {
   let renderedComponent: React.ReactNode;
 
   switch (transaction.type) {
     case "thought":
-      renderedComponent = <Thought>{transaction.text as string}</Thought>;
+      renderedComponent = <Thought>{transaction.text}</Thought>;
       break;
     case "content":
-      renderedComponent = <Content>{transaction.text as string}</Content>;
+      renderedComponent = <Content>{transaction.text}</Content>;
       break;
     case "tool_call":
-      const toolCall = transaction.text as ToolCall;
-
       renderedComponent = (
-        <ToolInvocation toolName={toolCall.function.name}>
-          {JSON.stringify(toolCall, null, 2)}
+        <ToolInvocation
+          toolName={
+            upperFirst(transaction.title).replaceAll("_", " ") ?? "Unknown tool"
+          }
+        >
+          {transaction.text}
+        </ToolInvocation>
+      );
+      break;
+    case "tool_evaluation":
+      renderedComponent = (
+        <ToolInvocation
+          toolName={
+            upperFirst(transaction.title).replaceAll("_", " ") ?? "Unknown tool"
+          }
+        >
+          {transaction.text}
         </ToolInvocation>
       );
       break;
