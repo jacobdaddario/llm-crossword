@@ -210,7 +210,7 @@ export function useCrosswordAgent({
                 setTrace((prevValue) => {
                   return updateTrace(prevValue, {
                     title: toolCall.function.name,
-                    text: JSON.stringify(toolCall.function.arguments, null, 2),
+                    text: JSON.stringify(toolCall.function, null, 2),
                     type: "tool_call",
                   });
                 });
