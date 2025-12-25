@@ -197,12 +197,25 @@ export const invokeTool = (
   };
 
   switch (toolCall.function.name) {
-    case "read_board_state":
-      return buildEvaluation(
-        JSON.stringify(read_board_state(gridState, gridNums), null, 2),
-      );
-    case "list_all_clues":
-      return buildEvaluation(JSON.stringify(list_all_clues(clueList), null, 2));
+      case "read_board_state": {
+        const board = read_board_state(gridState, gridNums);
+        const boardJson = JSON.stringify(board);
+        // Pretty-print only top-level rows while keeping each row on a single line
+        const formatted = `[` +
+          board
+            .map((_, i) => {
+              const rowJson = JSON.stringify(board[i]);
+              const prefix = i === 0 ? "\n  " : "\n  ";
+              const suffix = i === board.length - 1 ? "\n" : ",";
+              return prefix + rowJson + suffix;
+            })
+            .join("") +
+          `]`;
+
+        return buildEvaluation(formatted);
+      }
+      case "list_all_clues":
+        return buildEvaluation(JSON.stringify(list_all_clues(clueList), null, 2));
     case "fill_clue": {
       const { direction, clue_number, answer } = toolCall.function.arguments;
 
@@ -219,14 +232,21 @@ export const invokeTool = (
 
       return buildEvaluation(result);
     }
-    case "check_puzzle":
-      return buildEvaluation(
-        JSON.stringify(
-          check_puzzle(gridState, gridNums, answers, setGridCorrectness),
-          null,
-          2,
-        ),
-      );
+      case "check_puzzle": {
+        const grid = check_puzzle(gridState, gridNums, answers, setGridCorrectness);
+        const formatted = `[` +
+          grid
+            .map((row, i) => {
+              const rowJson = JSON.stringify(row);
+              const prefix = i === 0 ? "\n  " : "\n  ";
+              const suffix = i === grid.length - 1 ? "\n" : ",";
+              return prefix + rowJson + suffix;
+            })
+            .join("") +
+          `]`;
+
+        return buildEvaluation(formatted);
+      }
     default:
       return buildEvaluation("Unknown tool call");
   }
