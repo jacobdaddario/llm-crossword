@@ -7,7 +7,7 @@ type AgentTransactionTypes =
   | "tool_call"
   | "tool_evaluation";
 
-type AgentTransaction = {
+export type AgentTransaction = {
   type: AgentTransactionTypes;
   text: string;
   title?: string;

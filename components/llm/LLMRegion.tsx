@@ -1,24 +1,22 @@
 "use client";
 
-import { SparklesIcon } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/Popover";
+import { SparklesIcon } from "lucide-react";
 
 import { AgentToggle } from "@/components/llm/AgentToggle";
-import { Thought } from "@/components/llm/Thought";
 import { Content } from "@/components/llm/Content";
+import { Thought } from "@/components/llm/Thought";
 import { ToolInvocation } from "@/components/llm/ToolInvocation";
-import {
-  type AgentTransaction,
-  useCrosswordAgent,
-} from "@/hooks/use-crossword-agent";
+import { useCrosswordAgent } from "@/hooks/use-crossword-agent";
+import type { AgentTransaction } from "@/hooks/use-crossword-agent/trace-reducer";
+import { upperFirst } from "lodash";
 import { useEffect, useState } from "react";
 import { EmptyState } from "./EmptyState";
-import { upperFirst } from "lodash";
 
 function renderTransaction(transaction: AgentTransaction): React.ReactNode {
   let renderedComponent: React.ReactNode;
