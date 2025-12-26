@@ -120,7 +120,7 @@ const fillClue = (
     });
 
     setCurrentClue({ direction, arrayIndex: currentClueArrayIndex });
-    setGridCorrectness(Array(gridState.length ** 2).fill(undefined));
+    setGridCorrectness(Array(gridState.length).fill(undefined));
 
     const gridWithNumbers = zip(gridNumbers, gridState);
     const startingSquareIndex = gridWithNumbers.findIndex(
