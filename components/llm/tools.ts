@@ -133,17 +133,31 @@ const fillClue = (
     const jumpSize = direction === "across" ? 1 : gridLength;
 
     let index = startingSquareIndex;
-    splitAnswer.forEach((char) => {
-      if (gridState[index] === ".") {
-        return "Answer too long. Failed to write full answer. Partially persisted.";
-      }
-
+    splitAnswer.forEach((char, charNum) => {
       gridState[index] = char;
 
       index += jumpSize;
+
+      // NOTE: This is required to ensure that perfect fit answers don't throw errors.
+      if (charNum === splitAnswer.length - 1) {
+        return;
+      }
+
+      const isAcrossOverfill =
+        direction === "across" &&
+        Math.floor(index / gridLength) !==
+          Math.floor(startingSquareIndex / gridLength);
+      const isDownOverfill =
+        direction === "down" && Math.floor(index / gridLength) >= gridLength;
+
+      if (gridState[index] === "." || isAcrossOverfill || isDownOverfill) {
+        throw new Error(
+          "Answer too long. Failed to write full answer. Partially persisted.",
+        );
+      }
     });
-  } catch {
-    return "Failed to use tool successfully. Reconsider your inputs relative to tool definitions, and try again.";
+  } catch (e) {
+    return (e as Error).message;
   }
 
   return "Answer successfully written.";
