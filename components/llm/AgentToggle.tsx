@@ -1,6 +1,5 @@
 import { Button } from "@/components/ui/Button";
 import { PlayCircle, StopCircle } from "lucide-react";
-import type { Dispatch, SetStateAction } from "react";
 
 export function AgentToggle({
   onClick,
