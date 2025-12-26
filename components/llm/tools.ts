@@ -124,7 +124,7 @@ const fillClue = (
     });
 
     setCurrentClue({ direction, arrayIndex: currentClueArrayIndex });
-    setGridCorrectness(Array(gridState.length).fill(undefined));
+    setGridCorrectness(Array(gridState.length));
 
     const startingSquareIndex = gridNumbers.findIndex(
       (number) => number === clue_number,
