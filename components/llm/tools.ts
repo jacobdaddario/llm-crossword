@@ -16,6 +16,7 @@ type AgentState = {
   clueList: CrosswordClueLists;
   gridNums: CrosswordGridNumbers;
   gridState: CrosswordGrid;
+  setGridState: Dispatch<SetStateAction<CrosswordGrid>>;
   setCurrentClue: Dispatch<SetStateAction<CurrentClueIndex>>;
   answers: CrosswordGrid;
   setGridCorrectness: Dispatch<SetStateAction<(boolean | undefined)[]>>;
@@ -103,12 +104,15 @@ const fillClue = (
   setCurrentClue: Dispatch<SetStateAction<CurrentClueIndex>>,
   setGridCorrectness: Dispatch<SetStateAction<(boolean | undefined)[]>>,
   gridState: CrosswordGrid,
+  setGridState: Dispatch<SetStateAction<CrosswordGrid>>,
   gridNumbers: CrosswordGridNumbers,
   clueList: CrosswordClueLists,
   direction: CrosswordClueDirection,
   clue_number: number,
   answer: string,
 ): string => {
+  const newGridState = [...gridState];
+
   try {
     const currentClueArrayIndex = clueList[direction].findIndex((clue) => {
       // NOTE: I am making an assumption that the model will inconsistenly
@@ -133,7 +137,7 @@ const fillClue = (
 
     let index = startingSquareIndex;
     splitAnswer.forEach((char, charNum) => {
-      gridState[index] = char;
+      newGridState[index] = char;
 
       index += jumpSize;
 
@@ -150,15 +154,14 @@ const fillClue = (
         direction === "down" && Math.floor(index / gridLength) >= gridLength;
 
       if (gridState[index] === "." || isAcrossOverfill || isDownOverfill) {
-        throw new Error(
-          "Answer too long. Failed to write full answer. Partially persisted.",
-        );
+        throw new Error("Answer too long. Failed to write answer.");
       }
     });
   } catch (e) {
     return (e as Error).message;
   }
 
+  setGridState(newGridState);
   return "Answer successfully written.";
 };
 
@@ -201,6 +204,7 @@ export const invokeTool = (
     clueList,
     gridNums,
     gridState,
+    setGridState,
     setCurrentClue,
     answers,
     setGridCorrectness,
@@ -229,6 +233,7 @@ export const invokeTool = (
         setCurrentClue,
         setGridCorrectness,
         gridState,
+        setGridState,
         gridNums,
         clueList,
         direction as CrosswordClueDirection,

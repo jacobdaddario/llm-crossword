@@ -1,4 +1,12 @@
-import { type Context, useContext, useEffect, useRef, useState } from "react";
+import {
+  type Context,
+  type SetStateAction,
+  type Dispatch,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import ollama, { type ToolCall, type Message } from "ollama/browser";
 
 import { type ToolEvaluation, invokeTool, tools } from "@/components/llm/tools";
@@ -9,10 +17,12 @@ import {
   CurrentClueWriterContext,
   AnswersContext,
   GridCorrectnessWriterContext,
+  GridWriterContext,
 } from "@/components/crossword/PuzzleContext";
 
 import type {
   CrosswordClueLists,
+  CrosswordGrid,
   CrosswordGridNumbers,
 } from "@/types/crossword.types";
 
@@ -130,6 +140,9 @@ export function useCrosswordAgent({
   const runningRef = useRef(false);
   const gridStateRef = usePollPuzzleState(GridContext);
 
+  const setGridStateSnapshot = useRef<Dispatch<SetStateAction<CrosswordGrid>>>(
+    useContext(GridWriterContext),
+  );
   const gridNumsSnapshot = useRef<CrosswordGridNumbers>(
     useContext(GridNumbersContext),
   );
@@ -219,6 +232,7 @@ export function useCrosswordAgent({
                   clueList: clueListSnapshot.current,
                   gridNums: gridNumsSnapshot.current,
                   gridState: gridStateRef.current,
+                  setGridState: setGridStateSnapshot.current,
                   setCurrentClue: currentClueSetterSnapshot.current,
                   answers: answersSnapshot.current,
                   setGridCorrectness: setGridCorrectnessSnapshot.current,
