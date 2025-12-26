@@ -1,7 +1,7 @@
 ---
-model: gpt-oss:20b
+model: gpt-oss:120b
 branch: unhobbling-control
-runtime: 30 minutes
+runtime: 30 minutes started at first token
 puzzle: 03.json
 ---
 
