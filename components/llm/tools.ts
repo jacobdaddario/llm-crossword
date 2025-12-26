@@ -85,7 +85,7 @@ const prettyPrintRows = <T>(rows: T[][]): string => {
   return "[\n  " + rows.map((row) => JSON.stringify(row)).join("\n  ") + "\n]";
 };
 
-const read_board_state = (
+const readBoardState = (
   gridState: CrosswordGrid,
   gridNumbers: CrosswordGridNumbers,
 ): [CrosswordGridNumber | undefined, CrosswordGridCell | undefined][][] => {
@@ -95,11 +95,11 @@ const read_board_state = (
   return chunk(numberStatePair, gridLength);
 };
 
-const list_all_clues = (clues: CrosswordClueLists) => {
+const listAllClues = (clues: CrosswordClueLists) => {
   return clues;
 };
 
-const fill_clue = (
+const fillClue = (
   setCurrentClue: Dispatch<SetStateAction<CurrentClueIndex>>,
   setGridCorrectness: Dispatch<SetStateAction<(boolean | undefined)[]>>,
   gridState: CrosswordGrid,
@@ -149,7 +149,7 @@ const fill_clue = (
   return "Answer successfully written.";
 };
 
-const check_puzzle = (
+export const checkPuzzle = (
   gridState: CrosswordGrid,
   gridNumbers: CrosswordGridNumbers,
   answers: CrosswordGrid,
@@ -202,17 +202,17 @@ export const invokeTool = (
 
   switch (toolCall.function.name) {
     case "read_board_state": {
-      const board = read_board_state(gridState, gridNums);
+      const board = readBoardState(gridState, gridNums);
       const formatted = prettyPrintRows(board);
 
       return buildEvaluation(formatted);
     }
     case "list_all_clues":
-      return buildEvaluation(JSON.stringify(list_all_clues(clueList), null, 2));
+      return buildEvaluation(JSON.stringify(listAllClues(clueList), null, 2));
     case "fill_clue": {
       const { direction, clue_number, answer } = toolCall.function.arguments;
 
-      const result = fill_clue(
+      const result = fillClue(
         setCurrentClue,
         setGridCorrectness,
         gridState,
@@ -226,7 +226,7 @@ export const invokeTool = (
       return buildEvaluation(result);
     }
     case "check_puzzle": {
-      const grid = check_puzzle(
+      const grid = checkPuzzle(
         gridState,
         gridNums,
         answers,
@@ -240,7 +240,3 @@ export const invokeTool = (
       return buildEvaluation("Unknown tool call");
   }
 };
-
-// NOTE: Hacky, but don't know where to put this function where both files can consume it.
-// Chose to alias it to get rid of snakecase.
-export const checkPuzzle = check_puzzle;
