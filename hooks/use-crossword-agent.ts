@@ -5,7 +5,7 @@ import {
   useContext,
   useEffect,
   useRef,
-  useState,
+  useReducer,
 } from "react";
 import ollama, { type ToolCall, type Message } from "ollama/browser";
 
@@ -44,6 +44,16 @@ export type AgentTransaction = {
 };
 
 type AgentTrace = AgentTransaction[];
+
+type TraceMutation =
+  | { type: "append_content"; text: string }
+  | { type: "append_thinking"; text: string }
+  | {
+      type: "append_tool_call";
+      toolCall: ToolCall;
+      toolEvaluation: ToolEvaluation;
+    }
+  | { type: "truncate" };
 
 type AvailableModels = "gpt-oss:20b" | "gpt-oss:120b";
 
@@ -117,6 +127,34 @@ function updateTrace(trace: AgentTrace, newChunk: AgentTransaction) {
     : [...trace, newChunk];
 }
 
+function traceReducer(state: AgentTrace, action: TraceMutation) {
+  switch (action.type) {
+    case "append_content":
+      return updateTrace(state, { type: "content", text: action.text });
+    case "append_thinking":
+      return updateTrace(state, { type: "thought", text: action.text });
+    case "append_tool_call":
+      const toolCall = action.toolCall.function;
+      const name = toolCall.name;
+
+      return updateTrace(
+        updateTrace(state, {
+          title: name,
+          text: JSON.stringify(toolCall, null, 2),
+          type: "tool_call",
+        }),
+        {
+          title: name,
+          text: action.toolEvaluation.content,
+          type: "tool_evaluation",
+        },
+      );
+    case "truncate":
+      if (state.length <= 40) return state;
+      return state.toSpliced(0, state.length - 40);
+  }
+}
+
 function usePollPuzzleState<T>(context: Context<T>) {
   const observeredState = useContext(context);
 
@@ -135,7 +173,7 @@ export function useCrosswordAgent({
 }: {
   model: AvailableModels;
 }): CrosswordAgent {
-  const [trace, setTrace] = useState<AgentTrace>([]);
+  const [trace, dispatchTrace] = useReducer(traceReducer, []);
 
   const runningRef = useRef(false);
   const gridStateRef = usePollPuzzleState(GridContext);
@@ -197,37 +235,19 @@ export function useCrosswordAgent({
             }
 
             if (content) {
-              setTrace((prevValue) => {
-                return updateTrace(prevValue, {
-                  text: content,
-                  type: "content",
-                });
-              });
+              dispatchTrace({ type: "append_content", text: content });
 
               aggregatedContent += content;
             }
 
             if (thinking) {
-              setTrace((prevValue) => {
-                return updateTrace(prevValue, {
-                  text: thinking,
-                  type: "thought",
-                });
-              });
+              dispatchTrace({ type: "append_thinking", text: thinking });
 
               aggregatedThinking += thinking;
             }
 
             if (tool_calls) {
               tool_calls.forEach((toolCall) => {
-                setTrace((prevValue) => {
-                  return updateTrace(prevValue, {
-                    title: toolCall.function.name,
-                    text: JSON.stringify(toolCall.function, null, 2),
-                    type: "tool_call",
-                  });
-                });
-
                 const toolEvaluation = invokeTool(toolCall, {
                   clueList: clueListSnapshot.current,
                   gridNums: gridNumsSnapshot.current,
@@ -239,12 +259,10 @@ export function useCrosswordAgent({
                 });
                 aggregatedToolEvalutions.push(toolEvaluation);
 
-                setTrace((prevValue) => {
-                  return updateTrace(prevValue, {
-                    title: toolCall.function.name,
-                    text: toolEvaluation.content,
-                    type: "tool_evaluation",
-                  });
+                dispatchTrace({
+                  type: "append_tool_call",
+                  toolCall,
+                  toolEvaluation,
                 });
               });
 
@@ -280,10 +298,7 @@ export function useCrosswordAgent({
             messageHistory.shift();
           }
 
-          setTrace((prevValue) => {
-            if (prevValue.length <= 40) return prevValue;
-            return prevValue.toSpliced(0, prevValue.length - 40);
-          });
+          dispatchTrace({ type: "truncate" });
         } catch {
           // Swallow error, let Ollama sort itself out..
           await pollingDelay();
