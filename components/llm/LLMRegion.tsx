@@ -57,7 +57,7 @@ function renderTransaction(transaction: AgentTransaction): React.ReactNode {
 
 export function LLMRegion() {
   const { response, toggleAgent } = useCrosswordAgent({
-    model: "gpt-oss:20b",
+    model: "gpt-oss:120b",
   });
   const [running, setRunning] = useState(false);
 
