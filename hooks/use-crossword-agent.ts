@@ -1,100 +1,45 @@
+import ollama, { type Message, type ToolCall } from "ollama/browser";
 import {
   type Context,
-  type SetStateAction,
   type Dispatch,
+  type SetStateAction,
   useContext,
   useEffect,
-  useRef,
   useReducer,
+  useRef,
 } from "react";
-import ollama, { type ToolCall, type Message } from "ollama/browser";
 
-import { type ToolEvaluation, invokeTool, tools } from "@/components/llm/tools";
 import {
-  GridNumbersContext,
+  AnswersContext,
+  CurrentClueWriterContext,
   GridCluesContext,
   GridContext,
-  CurrentClueWriterContext,
-  AnswersContext,
   GridCorrectnessWriterContext,
+  GridNumbersContext,
   GridWriterContext,
 } from "@/components/crossword/PuzzleContext";
+import { type ToolEvaluation, invokeTool, tools } from "@/components/llm/tools";
 
 import type {
   CrosswordClueLists,
   CrosswordGrid,
   CrosswordGridNumbers,
 } from "@/types/crossword.types";
+import {
+  agentLoopMessage,
+  initialMessages,
+} from "./use-crossword-agent/llm-prompts";
+import {
+  type AgentTrace,
+  traceReducer,
+} from "./use-crossword-agent/trace-reducer";
 
 type CrosswordAgent = {
   response: AgentTrace;
   toggleAgent: (state: boolean) => void;
 };
 
-type AgentTransactionTypes =
-  | "content"
-  | "thought"
-  | "tool_call"
-  | "tool_evaluation";
-
-export type AgentTransaction = {
-  type: AgentTransactionTypes;
-  text: string;
-  title?: string;
-};
-
-type AgentTrace = AgentTransaction[];
-
-type TraceMutation =
-  | { type: "append_content"; text: string }
-  | { type: "append_thinking"; text: string }
-  | {
-      type: "append_tool_call";
-      toolCall: ToolCall;
-      toolEvaluation: ToolEvaluation;
-    }
-  | { type: "truncate" };
-
 type AvailableModels = "gpt-oss:20b" | "gpt-oss:120b";
-
-const repeatedInstructions = `
-## Imperatives
-- Do not use tables or LaTEX notation.
-- Use your tools to modify the crossword state.
-- Only use letters to try and solve the puzzle.
-- Do _NOT_ attempt to find the puzzle in training data. It's likely you will guess wrong.
-- You _MUST_ use the provided tools to solve the puzzle. Do _NOT_ just solve in internal state.
-- You _MUST_ solve 1-2 clues at a time. Do _NOT_ ruminate on solving the whole puzzle.
-- If you begin reasoning for a long time, say to yourself: "I am not to solve every question at once. Let's move to the next clue."
-- Make sure to consider down clues as well as clues on later numbers.
-- Do not reply to the user directly. Spend your time considering answers in your chain of thought.
-
-## Workflow
-- Select a clue from the list, and focus on that.
-- Consider solutions based on the surrounding state.
-- Attempt to fill in an answer if possible.
-- Otherwise, move to the next clue.
-- Prioritize fact-based clues first. Then use their answers to help with vague clues.
-- Sometimes when a player feels that they might not be have the correct answer for a square, they will use the check grid tool.
-- Tight cycles are essential.
-- If you want to give up, consider checking to see what answers are correct.
-`;
-
-const initialMessages: Message[] = [
-  {
-    role: "system",
-    content: `
-## Overview
-You are a crossword solving agent. Your job is to solve a crossword until completion. Typical crossword rules apply.
-
-${repeatedInstructions}
-`,
-  },
-  {
-    role: "user",
-    content: "The puzzle is blank. Please begin solving.",
-  },
-];
 
 // HACK: This might be a really dumb way of doing this, but I don't see any way to synchronously wait
 // on the client. GPT suggested this. Seems like clever use of `Promise` to basicaly force `setTimeout`
@@ -105,54 +50,6 @@ async function pollingDelay() {
       resolve();
     }, 2000);
   });
-}
-
-function updateTransaction(transaction: AgentTransaction, newChunk: string) {
-  return {
-    ...transaction,
-    text: transaction.text + newChunk,
-  };
-}
-
-function updateTrace(trace: AgentTrace, newChunk: AgentTransaction) {
-  const mostRecentTrace = trace.at(-1);
-
-  // NOTE: Tool calls all get their own trace.
-  return mostRecentTrace?.type !== "tool_call" &&
-    mostRecentTrace?.type === newChunk.type
-    ? [
-        ...trace.slice(0, -1),
-        updateTransaction(mostRecentTrace, newChunk.text as string),
-      ]
-    : [...trace, newChunk];
-}
-
-function traceReducer(state: AgentTrace, action: TraceMutation) {
-  switch (action.type) {
-    case "append_content":
-      return updateTrace(state, { type: "content", text: action.text });
-    case "append_thinking":
-      return updateTrace(state, { type: "thought", text: action.text });
-    case "append_tool_call":
-      const toolCall = action.toolCall.function;
-      const name = toolCall.name;
-
-      return updateTrace(
-        updateTrace(state, {
-          title: name,
-          text: JSON.stringify(toolCall, null, 2),
-          type: "tool_call",
-        }),
-        {
-          title: name,
-          text: action.toolEvaluation.content,
-          type: "tool_evaluation",
-        },
-      );
-    case "truncate":
-      if (state.length <= 40) return state;
-      return state.toSpliced(0, state.length - 40);
-  }
 }
 
 function usePollPuzzleState<T>(context: Context<T>) {
@@ -174,10 +71,9 @@ export function useCrosswordAgent({
   model: AvailableModels;
 }): CrosswordAgent {
   const [trace, dispatchTrace] = useReducer(traceReducer, []);
-
   const runningRef = useRef(false);
-  const gridStateRef = usePollPuzzleState(GridContext);
 
+  const gridStateRef = usePollPuzzleState(GridContext);
   const setGridStateSnapshot = useRef<Dispatch<SetStateAction<CrosswordGrid>>>(
     useContext(GridWriterContext),
   );
@@ -283,13 +179,7 @@ export function useCrosswordAgent({
                 ...evaluation,
               };
             }),
-            {
-              role: "user",
-              content: `
-  ${repeatedInstructions}
-  Continue trying to solve. You have all the time in the world. You can work as long as necesssary. Consider trying clues that haven't been filled yet. Go to lower parts of the list, or try a different direction.
-  `,
-            },
+            agentLoopMessage,
           );
 
           // NOTE: As sessions get long, it's important to not blow out the context on my machine
