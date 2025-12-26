@@ -122,9 +122,8 @@ const fillClue = (
     setCurrentClue({ direction, arrayIndex: currentClueArrayIndex });
     setGridCorrectness(Array(gridState.length).fill(undefined));
 
-    const gridWithNumbers = zip(gridNumbers, gridState);
-    const startingSquareIndex = gridWithNumbers.findIndex(
-      (square) => square[0] === clue_number,
+    const startingSquareIndex = gridNumbers.findIndex(
+      (number) => number === clue_number,
     );
 
     const gridLength = Math.sqrt(gridState.length);
