@@ -82,20 +82,7 @@ export const tools: Tool[] = [
 ];
 
 const prettyPrintRows = <T>(rows: T[][]): string => {
-  return (
-    `[` +
-    rows
-      .map((row, i) => {
-        const rowJson = JSON.stringify(row);
-
-        const prefix = "\n";
-        const suffix = i === rows.length - 1 ? "\n" : ",";
-
-        return prefix + rowJson + suffix;
-      })
-      .join("") +
-    `]`
-  );
+  return "[\n  " + rows.map((row) => JSON.stringify(row)).join("\n  ") + "\n]";
 };
 
 const read_board_state = (
