@@ -126,6 +126,8 @@ export function useCrosswordAgent({
             const { thinking, content, tool_calls } = chunk.message;
 
             if (chunk.done) {
+              tokenCount += chunk.prompt_eval_count;
+
               console.log(
                 `[TELEMETRY] Context Size: ${chunk.prompt_eval_count} tokens`,
                 `\n[TELEMETRY] Total tokens this run: ${tokenCount} tokens`,
@@ -183,18 +185,6 @@ export function useCrosswordAgent({
             }),
             agentLoopMessage,
           );
-
-          tokenCount +=
-            aggregatedContent.length +
-            aggregatedThinking.length +
-            aggregatedToolCalls.reduce(
-              (sum, toolCall) => sum + JSON.stringify(toolCall.function).length,
-              0,
-            ) +
-            aggregatedToolEvalutions.reduce(
-              (sum, toolEval) => sum + toolEval.content.length,
-              0,
-            );
 
           // NOTE: As sessions get long, it's important to not blow out the context on my machine
           // or to blue out the state size in React.
