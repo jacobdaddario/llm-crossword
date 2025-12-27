@@ -91,13 +91,18 @@ export function useCrosswordAgent({
     useContext(CurrentClueWriterContext),
   );
   const modelSnapshot = useRef<AvailableModels>(model);
+  const messageHistoryRef = useRef<Message[]>(initialMessages);
 
   useEffect(() => {
-    const messageHistory: Message[] = initialMessages;
     let tokenCount = 0;
 
     (async () => {
       while (true) {
+        const messageHistory = messageHistoryRef.current.toSpliced(
+          0,
+          messageHistoryRef.current.length - 20,
+        );
+
         if (!runningRef.current) {
           await pollingDelay();
 
@@ -170,7 +175,7 @@ export function useCrosswordAgent({
             }
           }
 
-          messageHistory.push(
+          messageHistoryRef.current.push(
             {
               role: "assistant",
               content: aggregatedContent,
@@ -185,12 +190,6 @@ export function useCrosswordAgent({
             }),
             agentLoopMessage,
           );
-
-          // NOTE: As sessions get long, it's important to not blow out the context on my machine
-          // or to blue out the state size in React.
-          while (messageHistory.length > 20) {
-            messageHistory.shift();
-          }
 
           dispatchTrace({ type: "truncate" });
         } catch {
