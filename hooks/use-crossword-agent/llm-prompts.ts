@@ -1,3 +1,9 @@
+import { prettyPrintRows } from "@/components/llm/tools";
+import type {
+  CrosswordGrid,
+  CrosswordGridNumbers,
+} from "@/types/crossword.types";
+import { chunk, zip } from "lodash";
 import type { Message } from "ollama/browser";
 
 const repeatedInstructions = `
@@ -46,3 +52,18 @@ export const agentLoopMessage: Message = {
   ${repeatedInstructions}
   `,
 };
+
+export function puzzleState(
+  gridState: CrosswordGrid,
+  gridNumbers: CrosswordGridNumbers,
+): Message {
+  const gridLength = Math.sqrt(gridState.length);
+  const numberStatePair = zip(gridNumbers, gridState);
+
+  const chunkedGridState = chunk(numberStatePair, gridLength);
+
+  return {
+    role: "user",
+    content: prettyPrintRows(chunkedGridState),
+  };
+}
