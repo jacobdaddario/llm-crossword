@@ -80,9 +80,10 @@ export function useCrosswordAgent({
   const gridNumsSnapshot = useRef<CrosswordGridNumbers>(
     useContext(GridNumbersContext),
   );
-  const clueListSnapshot = useRef<CrosswordClueLists>(
-    useContext(GridCluesContext),
-  );
+  const clueListSnapshot = useRef<CrosswordClueLists>({
+    across: [...useContext(GridCluesContext).across],
+    down: [...useContext(GridCluesContext).down],
+  });
   const answersSnapshot = useRef(useContext(AnswersContext));
   const setGridCorrectnessSnapshot = useRef(
     useContext(GridCorrectnessWriterContext),
