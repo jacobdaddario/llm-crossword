@@ -112,7 +112,7 @@ export function useCrosswordAgent({
             think: "low",
             stream: true,
             options: {
-              num_ctx: 12_276,
+              num_ctx: 16_464,
               num_predict: 1024,
             },
           });
