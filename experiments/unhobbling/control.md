@@ -7,8 +7,11 @@ puzzle: 03.json
 
 # Data
 
-| Run | Runtime (s) | Total Tokens | Correct Squares | Wrong Squares |
-| --- | ----------- | ------------ | --------------- | ------------- |
-| 1   | 1800        | 350587       | 28              | 159           |
-| 2   | 1800        | 361850       | 23              | 164           |
-| 3   | 1800        | 355244       | 16              | 171           |
+| Run | Runtime (s) | Total Tokens | Correct Squares | Wrong Squares | Empty Squares | Wrong - Empty Squares |
+| --- | ----------- | ------------ | --------------- | ------------- | ------------- | --------------------- |
+| 1   | 1800        | 350587       | 28              | 159           | Unknown       | Unknown               |
+| 2   | 1800        | 361850       | 23              | 164           | Unknown       | Unknown               |
+| 3   | 1800        | 355244       | 16              | 171           | Unknown       | Unknown               |
+| 4   |             |              |                 |               |               |                       |
+| 5   |             |              |                 |               |               |                       |
+| 6   |             |              |                 |               |               |                       |
