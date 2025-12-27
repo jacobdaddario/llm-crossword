@@ -7,7 +7,7 @@ puzzle: 03.json
 
 # Data
 
-| Run | Runtime (s) | Total Tokens | Correct Squares | Empty Squares |
+| Run | Runtime (s) | Total Tokens | Correct Squares | Wrong Squares |
 | --- | ----------- | ------------ | --------------- | ------------- |
 | 1   | 1800        | 270785       | 19              | 168           |
 | 2   | 1800        | 333838       | 18              | 169           |
