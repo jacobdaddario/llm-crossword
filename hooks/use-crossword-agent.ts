@@ -28,6 +28,7 @@ import type {
 import {
   agentLoopMessage,
   initialMessages,
+  puzzleState,
 } from "./use-crossword-agent/llm-prompts";
 import {
   type AgentTrace,
@@ -95,6 +96,10 @@ export function useCrosswordAgent({
   const messageHistoryRef = useRef<Message[]>(initialMessages);
 
   useEffect(() => {
+    const messageHistory: Message[] = initialMessages;
+    messageHistory.push(
+      puzzleState(gridStateRef.current, gridNumsSnapshot.current),
+    );
     let tokenCount = 0;
 
     (async () => {
@@ -190,6 +195,7 @@ export function useCrosswordAgent({
               };
             }),
             agentLoopMessage,
+            puzzleState(gridStateRef.current, gridNumsSnapshot.current),
           );
 
           dispatchTrace({ type: "truncate" });

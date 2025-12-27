@@ -31,14 +31,6 @@ export const tools: Tool[] = [
   {
     type: "function",
     function: {
-      name: "read_board_state",
-      description:
-        "Read the entire state of the board. This shows current answers and hint numbers. `0` indicates no number. `.` indicates a black square.",
-    },
-  },
-  {
-    type: "function",
-    function: {
       name: "list_all_clues",
       description:
         "List all clues in the puzzle, along with their clue numbers.",
@@ -82,18 +74,8 @@ export const tools: Tool[] = [
   },
 ];
 
-const prettyPrintRows = <T>(rows: T[][]): string => {
+export const prettyPrintRows = <T>(rows: T[][]): string => {
   return "[\n  " + rows.map((row) => JSON.stringify(row)).join("\n  ") + "\n]";
-};
-
-const readBoardState = (
-  gridState: CrosswordGrid,
-  gridNumbers: CrosswordGridNumbers,
-): [CrosswordGridNumber | undefined, CrosswordGridCell | undefined][][] => {
-  const gridLength = Math.sqrt(gridState.length);
-  const numberStatePair = zip(gridNumbers, gridState);
-
-  return chunk(numberStatePair, gridLength);
 };
 
 const listAllClues = (clues: CrosswordClueLists) => {
@@ -234,12 +216,6 @@ export const invokeTool = (
   };
 
   switch (toolCall.function.name) {
-    case "read_board_state": {
-      const board = readBoardState(gridState, gridNums);
-      const formatted = prettyPrintRows(board);
-
-      return buildEvaluation(formatted);
-    }
     case "list_all_clues":
       return buildEvaluation(JSON.stringify(listAllClues(clueList), null, 2));
     case "fill_clue": {
