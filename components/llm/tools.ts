@@ -97,7 +97,23 @@ const readBoardState = (
 };
 
 const listAllClues = (clues: CrosswordClueLists) => {
-  return clues;
+  // NOTE: I'm intentionally performing a mutation in place on the ref to the clue list here.
+  // I _don't_ want this to trigger a re-render. I only want it to change what
+  // the LLM sees internally when making a decision. Therefore, the ref is the right
+  // thing to change here. Additionally, inplace mutations on refs are both allowed and
+  // expedient here so that I don't have to pass the ref itself, just its value.
+  const unshiftedList = {
+    across: [...clues.across],
+    down: [...clues.down],
+  };
+
+  let first = clues.across.shift();
+  clues.across.push(first as string);
+
+  first = clues.down.shift();
+  clues.down.push(first as string);
+
+  return unshiftedList;
 };
 
 const fillClue = (
