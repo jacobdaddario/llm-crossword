@@ -50,8 +50,9 @@
   - [x] Cycle order of clues in cluelist
         Hypothesis: The LLM ruminates on early clues repeatedly, even when it has correct answers, due to a predisposition to prefer the top of the clue list. - Maybe. Definitely saw far more squares filled. I don't track this currently, so I need to add it to the list of stuff that I track. I want to do 3 more runs with this and the control to get metrics on squares filled. Additionally, it still ruminates on early clues a fair bit. I think that's due to prompt poisoning. I could benefit from skipping the reduced tool call experiments, instead jumping straight to no history in cycle, which would have fewer tool calls implicitly. Also, it would be good to monitor rumination on different topics by keeping a log of every run, which I could segment.
         _Action Items:_
-    - [ ] Re-run experiments no control and clue shuffle to get the diff on filled squares
+    - [x] Re-run experiments for control and clue shuffle to get the diff on filled squares
     - [x] Begin recording full run-logs to analyze for agent behaviors
+    - [ ] Write a conversation segmentation script to determine frequency of agent behaviors
     - [ ] Tee-up the no-history experiment next to test for prompt poisoning affecting clue selection
   - [ ] Randomize order of clues
   - [ ] Remove the tool that shows hint list and always include it in the prompt
