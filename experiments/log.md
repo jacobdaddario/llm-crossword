@@ -52,13 +52,15 @@
         _Action Items:_
     - [x] Re-run experiments for control and clue shuffle to get the diff on filled squares
     - [x] Begin recording full run-logs to analyze for agent behaviors
-    - [ ] Write a conversation segmentation script to determine frequency of agent behaviors
+    - [x] Write a conversation segmentation script to determine frequency of agent behaviors
+          Done, but it was useless. I need to come up with a different way to analyze agent transcripts.
+          I literally think I just need a SAE to do this. I might just be trying to replicate that behavior in a terribly inefficient way.
     - [ ] Tee-up the no-history experiment next to test for prompt poisoning affecting clue selection
+  - [ ] No history in cycle. Always start fresh with puzzle state and clue list
   - [ ] Randomize order of clues
   - [ ] Remove the tool that shows hint list and always include it in the prompt
-  - [ ] No history in cycle. Always start fresh with puzzle state and clue list
+        Only do this if the history-less approach proves to not unblock the current iteration
   - [ ] Automatically check the puzzle correctness every run
-  - [ ] Consider combinations of all of the above.
 - [ ] Compare and measure gpt-oss:20b, gpt-oss:120b, and other similarly sized models like llama3.1:70b. Compare both bare-bones agent and the enhanced agent form the above experiment.
 - [ ] Attempt to fine-tune gpt-oss:20b to improve agent efficacy.
 - [ ] Test Raw GPT-5.1 to see efficacy against local inference models. This will be a pain due to the overfitting of the current solution to ollama.

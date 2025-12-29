@@ -7,18 +7,11 @@ import { parseArgs } from "util";
 
 enum AgentSegmentType {
   CountingSquares = "counting_squares",
-  CandidateGeneration = "candidate_generation",
-  CandidateFiltering = "candidate_filtering",
-  ProgressAssessment = "progress_assessment",
-  CheckingAnswer = "checking_answer",
+  CandidateAssessment = "candidate_assessment",
   ConflictDetection = "conflict_detection",
+  ProgressAssessment = "progress_assessment",
   StrategyShift = "strategy_shift",
-  ToolSelection = "tool_selection",
-  ToolInvocation = "tool_invocation",
   TaskOrientation = "task_orientation",
-  CrossChecking = "cross_checking",
-  DeadlineAwareness = "deadline_awareness",
-  TerminationClaim = "termination_claim",
   Undetermined = "undetermined",
 }
 
@@ -31,23 +24,24 @@ const SYSTEM_MESSAGE = `
 You are a text classifier. The user will feed you sections of a transript, and you job is to classify the chunks in one of the following categories:
 ${Object.values(AgentSegmentType).join(" ")}
 
-Sample transcripts
+It is imperative that you only answer with one of those words. If a segment doesn't clearly match one of the categories, defer to "undertermined".
 
+Sample transcript:
 We need fill.
 
-task_orientation
+${AgentSegmentType.TaskOrientation}
 
-col3 length until black at col7? row4 col3-6 four
+col9 is #? row5 col9 is \".\" yes block. col10 start A27 length? row5 col10-? row5 col10-14 five letters then col15 #? actually row5 col15 is #? row5
 
-counting_squares
+${AgentSegmentType.CountingSquares}
 
-is first name of actress \"Pia\" who? \"Pia Zadora\"
+Row4 col12 start across 22 length row4 col12 ?,13?,14?,15? until end row4 length4 clue Big word in advertising = \"SALE\"? maybe \"FREE\". leave."
 
-candidate_generation
+${AgentSegmentType.CandidateAssessment}
 
-P N P S, need U M? Actually letters should be
+14 across (NORA). Maybe NORA wrong? clue 14 across: Edgar-winning writer Larson. That's \"Nora\" indeed. But that gives N at row2 col1 interfering.
 
-candidate_filtering
+${AgentSegmentType.ConflictDetection}
 `;
 
 const isAgentSegmentType = (value: string): value is AgentSegmentType => {
@@ -91,17 +85,23 @@ const combinedTranscript: string = transcript
   .join("\n");
 
 const splitter = new RecursiveCharacterTextSplitter({
-  chunkSize: 100,
+  chunkSize: 150,
   chunkOverlap: 0,
 });
 const segments = await splitter.splitText(combinedTranscript);
 
-const segmentedTranscript = await Promise.all(
-  segments.map<Promise<MessageSegments>>(async (segment) => {
+const segmentedTranscript = await segments.reduce<Promise<MessageSegments[]>>(
+  async (segmentedTranscriptsPromise, segment) => {
+    const segmentedTranscripts = await segmentedTranscriptsPromise;
+
     const category = await ollama.chat({
-      model: "gemma3:4b",
+      model: "gemma3:12b",
       messages: [
         { role: "system", content: SYSTEM_MESSAGE },
+        ...segmentedTranscripts.slice(-3).flatMap((segment) => [
+          { role: "user", content: segment.segmentContent },
+          { role: "assistant", content: segment.segmentType },
+        ]),
         { role: "user", content: segment },
       ],
     });
@@ -110,17 +110,24 @@ const segmentedTranscript = await Promise.all(
     console.log({ segmentType: categoryContent, segmentContent: segment });
 
     if (isAgentSegmentType(categoryContent)) {
-      return { segmentType: categoryContent, segmentContent: segment };
+      return [
+        ...segmentedTranscripts,
+        { segmentType: categoryContent, segmentContent: segment },
+      ];
     } else {
-      return {
-        segmentType: AgentSegmentType.Undetermined,
-        segmentContent: segment,
-      };
+      return [
+        ...segmentedTranscripts,
+        {
+          segmentType: AgentSegmentType.Undetermined,
+          segmentContent: segment,
+        },
+      ];
     }
-  }),
+  },
+  Promise.resolve([]),
 );
 
 await writeFile(
-  `${cwd}/experiments/segmented-transcripts/${values.output}.json`,
+  `${cwd()}/experiments/segmented-transcripts/${values.output}.json`,
   JSON.stringify(segmentedTranscript),
 );
