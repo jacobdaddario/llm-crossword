@@ -61,6 +61,7 @@
   - [ ] Remove the tool that shows hint list and always include it in the prompt
         Only do this if the history-less approach proves to not unblock the current iteration
   - [ ] Automatically check the puzzle correctness every run
+- [ ] Train SAEs on the agent histories produced by the various runs to check for healthy feature activations
 - [ ] Compare and measure gpt-oss:20b, gpt-oss:120b, and other similarly sized models like llama3.1:70b. Compare both bare-bones agent and the enhanced agent form the above experiment.
 - [ ] Attempt to fine-tune gpt-oss:20b to improve agent efficacy.
 - [ ] Test Raw GPT-5.1 to see efficacy against local inference models. This will be a pain due to the overfitting of the current solution to ollama.
