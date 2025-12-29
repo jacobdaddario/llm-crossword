@@ -27,8 +27,17 @@ Exeuction loop:
 5. Prioritize fact-based clues first. Then use their answers to help with vague clues.
 6. Use the check grid tool if uncertain about an answer's correctness.
 
+Puzzle format:
+[       col1, col2
+  row1: [],   []
+  row2: [],   []
+]
+
+Square format:
+[Clue number, Current value, Correctness]
+
 Termination:
-When you notice that your thought has gone on for a substantial time, stop this will provide a fresh view of the board and clues.`;
+When you notice that your thought has gone on for a substantial time, cede your turn.`;
 
 export const initialMessages: Message[] = [
   {
@@ -46,10 +55,11 @@ ${agentSteering}`,
 export function puzzleState(
   gridState: CrosswordGrid,
   gridNumbers: CrosswordGridNumbers,
+  gridCorrectness: (boolean | undefined)[],
 ): Message {
   const gridLength = Math.sqrt(gridState.length);
-  const numberStatePair = zip(gridNumbers, gridState);
 
+  const numberStatePair = zip(gridNumbers, gridState, gridCorrectness);
   const chunkedGridState = chunk(numberStatePair, gridLength);
 
   return {

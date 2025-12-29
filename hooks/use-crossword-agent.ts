@@ -14,6 +14,7 @@ import {
   CurrentClueWriterContext,
   GridCluesContext,
   GridContext,
+  GridCorrectnessContext,
   GridCorrectnessWriterContext,
   GridNumbersContext,
   GridWriterContext,
@@ -86,6 +87,7 @@ export function useCrosswordAgent({
     useContext(GridCluesContext),
   );
   const answersSnapshot = useRef(useContext(AnswersContext));
+  const gridCorrectnessRef = usePollPuzzleState(GridCorrectnessContext);
   const setGridCorrectnessSnapshot = useRef(
     useContext(GridCorrectnessWriterContext),
   );
@@ -110,7 +112,11 @@ export function useCrosswordAgent({
         try {
           const messageHistory: Message[] = [
             ...initialMessages,
-            puzzleState(gridStateRef.current, gridNumsSnapshot.current),
+            puzzleState(
+              gridStateRef.current,
+              gridNumsSnapshot.current,
+              gridCorrectnessRef.current,
+            ),
             listAllClues(clueListSnapshot.current),
             formatMemory(memory),
           ];
@@ -202,7 +208,7 @@ export function useCrosswordAgent({
             await ollama.generate({
               model: "gemma3:12b",
               system:
-                "Your job is to summarize what happened in an agent execution turn. When extensive reasoning occurs, indicate that the next turn should include a tool call. Be very terse. Actions are only taken if they appear in tool_calls. Everything else is reasoning.",
+                "Your job is to summarize what happened in an agent execution turn. When extensive reasoning occurs indicate that a tool should be used next. Be very terse. Actions are only taken if they appear in tool_calls. Everything else is reasoning.",
               prompt: JSON.stringify(agentTurn),
               options: {
                 num_ctx: 12_276,
@@ -227,7 +233,7 @@ export function useCrosswordAgent({
     // continue to be guarded against accidentally enclosing state in this effect. That would be
     // bad because either I'd be violating the exhaustive deps model (and obviously have stale state)
     // or I would have to add it to this list, breaking the long-running effect model.
-  }, [gridStateRef]);
+  }, [gridStateRef, gridCorrectnessRef]);
 
   return {
     response: trace,
