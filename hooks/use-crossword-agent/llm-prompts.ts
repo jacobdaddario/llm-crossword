@@ -7,8 +7,7 @@ import type {
 import { chunk, zip } from "lodash";
 import type { Message } from "ollama/browser";
 
-const repeatedInstructions = `
-Objective:
+const agentSteering = `Objective:
 You are an autonomous agent. Continue working on the crossword until it is complete. Do not ask for user input. Document assumptions you make.
 
 Rules:
@@ -29,30 +28,20 @@ Exeuction loop:
 6. Use the check grid tool if uncertain about an answer's correctness.
 
 Termination:
-When every square in the check_puzzle tool output is true or undefined, the puzzle is correct. You may then state that the puzzle is solved.
-`;
+When every square in the check_puzzle tool output is true or undefined, the puzzle is correct. You may then state that the puzzle is solved.`;
 
 export const initialMessages: Message[] = [
   {
     role: "system",
-    content: `
-You are a crossword solving agent. Your job is to solve a crossword until completion. Typical crossword rules apply.
+    content: `You are a crossword solving agent. Your job is to solve a crossword until completion. Typical crossword rules apply.
 
-${repeatedInstructions}
-`,
+${agentSteering}`,
   },
   {
     role: "user",
-    content: "The puzzle is blank. Please begin solving.",
+    content: "The board state and clue list are as follows.",
   },
 ];
-
-export const agentLoopMessage: Message = {
-  role: "user",
-  content: `
-  ${repeatedInstructions}
-  `,
-};
 
 export function puzzleState(
   gridState: CrosswordGrid,

@@ -26,7 +26,6 @@ import type {
   CrosswordGridNumbers,
 } from "@/types/crossword.types";
 import {
-  agentLoopMessage,
   initialMessages,
   listAllClues,
   puzzleState,
@@ -93,24 +92,13 @@ export function useCrosswordAgent({
     useContext(CurrentClueWriterContext),
   );
   const modelSnapshot = useRef<AvailableModels>(model);
-  const messageHistoryRef = useRef<Message[]>(initialMessages);
+  const messageHistoryRef = useRef<Message[]>([]);
 
   useEffect(() => {
-    const messageHistory: Message[] = initialMessages;
-    messageHistory.push(
-      puzzleState(gridStateRef.current, gridNumsSnapshot.current),
-    );
-    messageHistory.push(listAllClues(clueListSnapshot.current));
-
     let tokenCount = 0;
 
     (async () => {
       while (true) {
-        const messageHistory = messageHistoryRef.current.toSpliced(
-          0,
-          messageHistoryRef.current.length - 20,
-        );
-
         if (!runningRef.current) {
           await pollingDelay();
 
@@ -118,6 +106,14 @@ export function useCrosswordAgent({
         }
 
         try {
+          const messageHistory: Message[] = [
+            ...initialMessages,
+            puzzleState(gridStateRef.current, gridNumsSnapshot.current),
+            listAllClues(clueListSnapshot.current),
+          ];
+
+          messageHistoryRef.current.push(...messageHistory);
+
           const stream = await ollama.chat({
             model: modelSnapshot.current,
             messages: messageHistory,
@@ -196,8 +192,6 @@ export function useCrosswordAgent({
                 ...evaluation,
               };
             }),
-            agentLoopMessage,
-            puzzleState(gridStateRef.current, gridNumsSnapshot.current),
           );
 
           dispatchTrace({ type: "truncate" });
