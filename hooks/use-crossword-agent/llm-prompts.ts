@@ -28,7 +28,7 @@ Exeuction loop:
 6. Use the check grid tool if uncertain about an answer's correctness.
 
 Termination:
-When every square in the check_puzzle tool output is true or undefined, the puzzle is correct. You may then state that the puzzle is solved.`;
+When you notice that your thought has gone on for a substantial time, stop this will provide a fresh view of the board and clues.`;
 
 export const initialMessages: Message[] = [
   {

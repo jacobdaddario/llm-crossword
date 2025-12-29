@@ -200,9 +200,9 @@ export function useCrosswordAgent({
 
           const stepSummary = (
             await ollama.generate({
-              model: "gemma3:4b",
+              model: "gemma3:12b",
               system:
-                "Your job is to summarize what happened in an agent execution turn. Give a general summary of work down and indicate the clue that was worked on. Be very terse.",
+                "Your job is to summarize what happened in an agent execution turn. When extensive reasoning occurs, indicate that the next turn should include a tool call. Be very terse. Actions are only taken if they appear in tool_calls. Everything else is reasoning.",
               prompt: JSON.stringify(agentTurn),
               options: {
                 num_ctx: 12_276,
