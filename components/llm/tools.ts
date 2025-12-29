@@ -31,14 +31,6 @@ export const tools: Tool[] = [
   {
     type: "function",
     function: {
-      name: "list_all_clues",
-      description:
-        "List all clues in the puzzle, along with their clue numbers.",
-    },
-  },
-  {
-    type: "function",
-    function: {
       name: "fill_clue",
       description:
         "Fill in the targeted clue with the returned answer. Answer must contain only letters, and it must fit in the length of the clue.",
@@ -76,26 +68,6 @@ export const tools: Tool[] = [
 
 export const prettyPrintRows = <T>(rows: T[][]): string => {
   return "[\n  " + rows.map((row) => JSON.stringify(row)).join("\n  ") + "\n]";
-};
-
-const listAllClues = (clues: CrosswordClueLists) => {
-  // NOTE: I'm intentionally performing a mutation in place on the ref to the clue list here.
-  // I _don't_ want this to trigger a re-render. I only want it to change what
-  // the LLM sees internally when making a decision. Therefore, the ref is the right
-  // thing to change here. Additionally, inplace mutations on refs are both allowed and
-  // expedient here so that I don't have to pass the ref itself, just its value.
-  const unshiftedList = {
-    across: [...clues.across],
-    down: [...clues.down],
-  };
-
-  let first = clues.across.shift();
-  clues.across.push(first as string);
-
-  first = clues.down.shift();
-  clues.down.push(first as string);
-
-  return unshiftedList;
 };
 
 const fillClue = (
@@ -216,8 +188,6 @@ export const invokeTool = (
   };
 
   switch (toolCall.function.name) {
-    case "list_all_clues":
-      return buildEvaluation(JSON.stringify(listAllClues(clueList), null, 2));
     case "fill_clue": {
       const { direction, clue_number, answer } = toolCall.function.arguments;
 

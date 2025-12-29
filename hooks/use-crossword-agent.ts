@@ -28,6 +28,7 @@ import type {
 import {
   agentLoopMessage,
   initialMessages,
+  listAllClues,
   puzzleState,
 } from "./use-crossword-agent/llm-prompts";
 import {
@@ -99,6 +100,8 @@ export function useCrosswordAgent({
     messageHistory.push(
       puzzleState(gridStateRef.current, gridNumsSnapshot.current),
     );
+    messageHistory.push(listAllClues(clueListSnapshot.current));
+
     let tokenCount = 0;
 
     (async () => {
