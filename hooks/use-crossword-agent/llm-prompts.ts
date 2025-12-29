@@ -58,7 +58,7 @@ export function puzzleState(
   };
 }
 
-export const listAllClues = (clues: CrosswordClueLists) => {
+export const listAllClues = (clues: CrosswordClueLists): Message => {
   // NOTE: I'm intentionally performing a mutation in place on the ref to the clue list here.
   // I _don't_ want this to trigger a re-render. I only want it to change what
   // the LLM sees internally when making a decision. Therefore, the ref is the right
@@ -78,5 +78,15 @@ export const listAllClues = (clues: CrosswordClueLists) => {
   return {
     role: "user",
     content: JSON.stringify(unshiftedList, null, 2),
+  };
+};
+
+export const formatMemory = (memory: string[]): Message => {
+  const formattedMemory =
+    "This is the history of your work so far, in order. The most recent action appears last.\n" +
+    memory.join("\n");
+  return {
+    role: "user",
+    content: formattedMemory,
   };
 };

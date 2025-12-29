@@ -26,6 +26,7 @@ import type {
   CrosswordGridNumbers,
 } from "@/types/crossword.types";
 import {
+  formatMemory,
   initialMessages,
   listAllClues,
   puzzleState,
@@ -95,6 +96,7 @@ export function useCrosswordAgent({
   const messageHistoryRef = useRef<Message[]>([]);
 
   useEffect(() => {
+    const memory = ["The puzzle is fresh. The current clue is 1 across."];
     let tokenCount = 0;
 
     (async () => {
@@ -110,6 +112,7 @@ export function useCrosswordAgent({
             ...initialMessages,
             puzzleState(gridStateRef.current, gridNumsSnapshot.current),
             listAllClues(clueListSnapshot.current),
+            formatMemory(memory),
           ];
 
           messageHistoryRef.current.push(...messageHistory);
@@ -122,7 +125,7 @@ export function useCrosswordAgent({
             stream: true,
             options: {
               num_ctx: 12_276,
-              num_predict: 1024,
+              num_predict: 1_024,
             },
           });
 
@@ -179,13 +182,14 @@ export function useCrosswordAgent({
             }
           }
 
+          const agentTurn = {
+            role: "assistant",
+            content: aggregatedContent,
+            thinking: aggregatedThinking,
+            tool_calls: aggregatedToolCalls,
+          };
           messageHistoryRef.current.push(
-            {
-              role: "assistant",
-              content: aggregatedContent,
-              thinking: aggregatedThinking,
-              tool_calls: aggregatedToolCalls,
-            },
+            agentTurn,
             ...aggregatedToolEvalutions.map<Message>((evaluation) => {
               return {
                 role: "tool",
@@ -193,6 +197,20 @@ export function useCrosswordAgent({
               };
             }),
           );
+
+          const stepSummary = (
+            await ollama.generate({
+              model: "gemma3:4b",
+              system:
+                "Your job is to summarize what happened in an agent execution turn. Give a general summary of work down and indicate the clue that was worked on. Be very terse.",
+              prompt: JSON.stringify(agentTurn),
+              options: {
+                num_ctx: 12_276,
+                num_predict: 1_024,
+              },
+            })
+          ).response;
+          memory.push(stepSummary);
 
           dispatchTrace({ type: "truncate" });
         } catch {
