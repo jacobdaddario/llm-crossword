@@ -12,3 +12,5 @@ puzzle: 03.json
 | 1   |             |              |                 |               |               |                       |
 | 2   |             |              |                 |               |               |                       |
 | 3   |             |              |                 |               |               |                       |
+
+Note: First few attempts fell into an abyss of checking puzzle. They aren't included here.
