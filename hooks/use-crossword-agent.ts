@@ -208,7 +208,7 @@ export function useCrosswordAgent({
             await ollama.generate({
               model: "gemma3:12b",
               system:
-                "Your job is to summarize what happened in an agent execution turn. When extensive reasoning occurs indicate that a tool should be used next. Be very terse. Actions are only taken if they appear in tool_calls. Everything else is reasoning.",
+                "Your job is to summarize what happened in an agent execution turn. Focus on mentioning when the reasoning indicates an answer is correct. Be very terse. Actions are only taken if they appear in tool_calls. Everything else is reasoning.",
               prompt: JSON.stringify(agentTurn),
               options: {
                 num_ctx: 12_276,

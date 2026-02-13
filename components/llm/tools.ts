@@ -57,13 +57,13 @@ export const tools: Tool[] = [
       },
     },
   },
-  {
-    type: "function",
-    function: {
-      name: "check_puzzle",
-      description: "Checks the entire completed crossword grid.",
-    },
-  },
+  // {
+  //   type: "function",
+  //   function: {
+  //     name: "check_puzzle",
+  //     description: "Checks the entire completed crossword grid.",
+  //   },
+  // },
 ];
 
 export const prettyPrintRows = <T>(rows: T[][]): string => {
