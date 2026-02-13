@@ -58,11 +58,11 @@
     - [x] Tee-up the no-history experiment next to test for prompt poisoning affecting clue selection
   - [x] No history in cycle. Always start fresh with puzzle state and clue list
   - [x] ~Randomize order of clues~ Opted to not perform. Earlier experiments seem to indicate that the hypothesis regarding bias towards early clue positions is wrong.
-  - [x] ~Remove the tool that shows hint list and always include it in the prompt~ Opting to not do, because it doesn't seem that it will produce a compelling result at this time.
-        Only do this if the history-less approach proves to not unblock the current iteration
+  - [x] ~Remove the tool that shows hint list and always include it in the prompt~ Always showing the clues is part of a historyless approach anyways. I don't know why I thought it was something separate.
   - [x] ~Automatically check the puzzle correctness every run~ Seems unhelpful at this time. Opting to not do.
   - [ ] No history clearly fails, but full history seems to fail to. Trying a Context Compaction strategy.
         Hypothesis: Context compaction strategy with focus on enumerating current task will meaningfully persist history better than raw traces, and will help overcome early clue bias.
+  - [ ] Change to a current hint tool setup to focus efforts
 - [ ] Train SAEs on the agent histories produced by the various runs to check for healthy feature activations
 - [ ] Compare and measure gpt-oss:20b, gpt-oss:120b, and other similarly sized models like llama3.1:70b. Compare both bare-bones agent and the enhanced agent form the above experiment.
 - [ ] Attempt to fine-tune gpt-oss:20b to improve agent efficacy.
