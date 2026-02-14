@@ -9,7 +9,7 @@ puzzle: 03.json
 
 | Run | Runtime (s) | Total Tokens | Correct Squares | Wrong Squares | Empty Squares | Wrong - Empty Squares |
 | --- | ----------- | ------------ | --------------- | ------------- | ------------- | --------------------- |
-| 1   |             |              |                 |               |               |                       |
+| 1   | 1800        | 187563       | 13              | 174           | 163           | 11                    |
 | 2   |             |              |                 |               |               |                       |
 | 3   |             |              |                 |               |               |                       |
 
