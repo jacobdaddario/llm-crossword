@@ -1,11 +1,11 @@
-import ollama, { type Message, type ToolCall } from "ollama/browser";
+import { generateText, stepCountIs, type ModelMessage } from "ai";
+import { ollama } from "ai-sdk-ollama";
 import {
   type Context,
   type Dispatch,
   type SetStateAction,
   useContext,
   useEffect,
-  useReducer,
   useRef,
 } from "react";
 
@@ -18,7 +18,7 @@ import {
   GridNumbersContext,
   GridWriterContext,
 } from "@/components/crossword/PuzzleContext";
-import { type ToolEvaluation, invokeTool, tools } from "@/components/llm/tools";
+import { createCrosswordTools } from "@/components/llm/tools";
 
 import type {
   CrosswordClueLists,
@@ -29,13 +29,8 @@ import {
   agentLoopMessage,
   initialMessages,
 } from "./use-crossword-agent/llm-prompts";
-import {
-  type AgentTrace,
-  traceReducer,
-} from "./use-crossword-agent/trace-reducer";
 
 type CrosswordAgent = {
-  response: AgentTrace;
   toggleAgent: (state: boolean) => void;
 };
 
@@ -70,7 +65,6 @@ export function useCrosswordAgent({
 }: {
   model: AvailableModels;
 }): CrosswordAgent {
-  const [trace, dispatchTrace] = useReducer(traceReducer, []);
   const runningRef = useRef(false);
 
   const gridStateRef = usePollPuzzleState(GridContext);
@@ -91,13 +85,14 @@ export function useCrosswordAgent({
     useContext(CurrentClueWriterContext),
   );
   const modelSnapshot = useRef<AvailableModels>(model);
-  const messageHistoryRef = useRef<Message[]>(initialMessages);
+  const messageHistoryRef = useRef<ModelMessage[]>(initialMessages);
 
   useEffect(() => {
     let tokenCount = 0;
+    let cancelled = false;
 
     (async () => {
-      while (true) {
+      while (!cancelled) {
         const messageHistory = messageHistoryRef.current.toSpliced(
           0,
           messageHistoryRef.current.length - 20,
@@ -110,88 +105,35 @@ export function useCrosswordAgent({
         }
 
         try {
-          const stream = await ollama.chat({
-            model: modelSnapshot.current,
+          const response = await generateText({
+            model: ollama(modelSnapshot.current, {
+              think: "low",
+              options: {
+                num_ctx: 12_276,
+                num_predict: 1024,
+              },
+            }),
             messages: messageHistory,
-            tools: tools,
-            think: "low",
-            stream: true,
-            options: {
-              num_ctx: 12_276,
-              num_predict: 1024,
-            },
+            tools: createCrosswordTools({
+              clueList: clueListSnapshot.current,
+              gridNums: gridNumsSnapshot.current,
+              gridState: gridStateRef.current,
+              setGridState: setGridStateSnapshot.current,
+              setCurrentClue: currentClueSetterSnapshot.current,
+              answers: answersSnapshot.current,
+              setGridCorrectness: setGridCorrectnessSnapshot.current,
+            }),
+            stopWhen: stepCountIs(20),
           });
 
-          let aggregatedThinking = "";
-          let aggregatedContent = "";
-          const aggregatedToolCalls: ToolCall[] = [];
-          const aggregatedToolEvalutions: ToolEvaluation[] = [];
+          tokenCount += response.totalUsage.inputTokens ?? 0;
 
-          for await (const chunk of stream) {
-            const { thinking, content, tool_calls } = chunk.message;
-
-            if (chunk.done) {
-              tokenCount += chunk.prompt_eval_count;
-
-              console.log(
-                `[TELEMETRY] Context Size: ${chunk.prompt_eval_count} tokens`,
-                `\n[TELEMETRY] Total tokens this run: ${tokenCount} tokens`,
-              );
-            }
-
-            if (content) {
-              dispatchTrace({ type: "append_content", text: content });
-
-              aggregatedContent += content;
-            }
-
-            if (thinking) {
-              dispatchTrace({ type: "append_thinking", text: thinking });
-
-              aggregatedThinking += thinking;
-            }
-
-            if (tool_calls) {
-              tool_calls.forEach((toolCall) => {
-                const toolEvaluation = invokeTool(toolCall, {
-                  clueList: clueListSnapshot.current,
-                  gridNums: gridNumsSnapshot.current,
-                  gridState: gridStateRef.current,
-                  setGridState: setGridStateSnapshot.current,
-                  setCurrentClue: currentClueSetterSnapshot.current,
-                  answers: answersSnapshot.current,
-                  setGridCorrectness: setGridCorrectnessSnapshot.current,
-                });
-                aggregatedToolEvalutions.push(toolEvaluation);
-
-                dispatchTrace({
-                  type: "append_tool_call",
-                  toolCall,
-                  toolEvaluation,
-                });
-              });
-
-              aggregatedToolCalls.push(...tool_calls);
-            }
-          }
-
-          messageHistoryRef.current.push(
-            {
-              role: "assistant",
-              content: aggregatedContent,
-              thinking: aggregatedThinking,
-              tool_calls: aggregatedToolCalls,
-            },
-            ...aggregatedToolEvalutions.map<Message>((evaluation) => {
-              return {
-                role: "tool",
-                ...evaluation,
-              };
-            }),
-            agentLoopMessage,
+          console.log(
+            `[TELEMETRY] Context Size: ${response.usage.inputTokens} tokens`,
+            `\n[TELEMETRY] Total tokens this run: ${tokenCount} tokens`,
           );
 
-          dispatchTrace({ type: "truncate" });
+          messageHistoryRef.current.push(...response.response.messages, agentLoopMessage);
         } catch {
           // Swallow error, let Ollama sort itself out..
           await pollingDelay();
@@ -199,6 +141,9 @@ export function useCrosswordAgent({
         }
       }
     })();
+    return () => {
+      cancelled = true;
+    };
     // NOTE: In practice, this is a dependency-free effect. This will _never_ trigger a re-run. It is a
     // totally stable value, as it is a ref. This is still a long-running effect that will never
     // re-run, since its only dependency is stable. The react-hooks eslint rule is unable to discern
@@ -209,7 +154,6 @@ export function useCrosswordAgent({
   }, [gridStateRef]);
 
   return {
-    response: trace,
     toggleAgent: (state: boolean) => {
       runningRef.current = state;
     },
