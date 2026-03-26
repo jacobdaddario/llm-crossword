@@ -6,9 +6,8 @@ import {
   CrosswordGridNumber,
   CrosswordGridNumbers,
 } from "@/types/crossword.types";
-import { tool, type ToolSet } from "ai";
 import { chunk, zip } from "lodash";
-import { z } from "zod";
+import { Tool, ToolCall } from "ollama/browser";
 
 import type { CurrentClueIndex } from "@/components/crossword/PuzzleContext";
 import { Dispatch, SetStateAction } from "react";
@@ -23,34 +22,65 @@ type AgentState = {
   setGridCorrectness: Dispatch<SetStateAction<(boolean | undefined)[]>>;
 };
 
-export const crosswordAgentToolDefinitions = [
+export type ToolEvaluation = {
+  tool_name: string;
+  content: string;
+};
+
+export const tools: Tool[] = [
   {
-    name: "read_board_state",
-    description:
-      "Read the entire state of the board. This shows current answers and hint numbers. `0` indicates no number. `.` indicates a black square.",
-    inputSchema: "{}",
+    type: "function",
+    function: {
+      name: "read_board_state",
+      description:
+        "Read the entire state of the board. This shows current answers and hint numbers. `0` indicates no number. `.` indicates a black square.",
+    },
   },
   {
-    name: "list_all_clues",
-    description: "List all clues in the puzzle, along with their clue numbers.",
-    inputSchema: "{}",
+    type: "function",
+    function: {
+      name: "list_all_clues",
+      description:
+        "List all clues in the puzzle, along with their clue numbers.",
+    },
   },
   {
-    name: "fill_clue",
-    description:
-      "Fill in the targeted clue with the returned answer. Answer must contain only letters, and it must fit in the length of the clue.",
-    inputSchema: `{
-  "direction": "across | down",
-  "clue_number": "integer",
-  "answer": "string"
-}`,
+    type: "function",
+    function: {
+      name: "fill_clue",
+      description:
+        "Fill in the targeted clue with the returned answer. Answer must contain only letters, and it must fit in the length of the clue.",
+      parameters: {
+        type: "object",
+        required: ["answer"],
+        properties: {
+          direction: {
+            type: "string",
+            description: "The direction of the clue",
+            enum: ["across", "down"],
+          },
+          clue_number: {
+            type: "integer",
+            description:
+              "The numerical identifier, from the puzzle list, of the clue",
+          },
+          answer: {
+            type: "string",
+            description:
+              "The guessed answer to the clue. Must fit in the spaces available. Will overwrite the current content of the spaces.",
+          },
+        },
+      },
+    },
   },
   {
-    name: "check_puzzle",
-    description: "Checks the entire completed crossword grid.",
-    inputSchema: "{}",
+    type: "function",
+    function: {
+      name: "check_puzzle",
+      description: "Checks the entire completed crossword grid.",
+    },
   },
-] as const;
+];
 
 const prettyPrintRows = <T>(rows: T[][]): string => {
   return "[\n  " + rows.map((row) => JSON.stringify(row)).join("\n  ") + "\n]";
@@ -168,68 +198,63 @@ export const checkPuzzle = (
   return chunk(gridCorrectnessVisualization, gridLength);
 };
 
-export const createCrosswordTools = ({
-  clueList,
-  gridNums,
-  gridState,
-  setGridState,
-  setCurrentClue,
-  answers,
-  setGridCorrectness,
-}: AgentState): ToolSet => {
-  return {
-    read_board_state: tool({
-      description:
-        "Read the entire state of the board. This shows current answers and hint numbers. `0` indicates no number. `.` indicates a black square.",
-      inputSchema: z.object({}),
-      execute: async () => {
-        const board = readBoardState(gridState, gridNums);
-        return prettyPrintRows(board);
-      },
-    }),
-    list_all_clues: tool({
-      description: "List all clues in the puzzle, along with their clue numbers.",
-      inputSchema: z.object({}),
-      execute: async () => {
-        return JSON.stringify(listAllClues(clueList), null, 2);
-      },
-    }),
-    fill_clue: tool({
-      description:
-        "Fill in the targeted clue with the returned answer. Answer must contain only letters, and it must fit in the length of the clue.",
-      inputSchema: z.object({
-        direction: z.enum(["across", "down"]).describe("The direction of the clue"),
-        clue_number: z
-          .number()
-          .int()
-          .describe("The numerical identifier, from the puzzle list, of the clue"),
-        answer: z
-          .string()
-          .describe(
-            "The guessed answer to the clue. Must fit in the spaces available. Will overwrite the current content of the spaces.",
-          ),
-      }),
-      execute: async ({ direction, clue_number, answer }) => {
-        return fillClue(
-          setCurrentClue,
-          setGridCorrectness,
-          gridState,
-          setGridState,
-          gridNums,
-          clueList,
-          direction,
-          clue_number,
-          answer,
-        );
-      },
-    }),
-    check_puzzle: tool({
-      description: "Checks the entire completed crossword grid.",
-      inputSchema: z.object({}),
-      execute: async () => {
-        const grid = checkPuzzle(gridState, gridNums, answers, setGridCorrectness);
-        return prettyPrintRows(grid);
-      },
-    }),
+export const invokeTool = (
+  toolCall: ToolCall,
+  {
+    clueList,
+    gridNums,
+    gridState,
+    setGridState,
+    setCurrentClue,
+    answers,
+    setGridCorrectness,
+  }: AgentState,
+): ToolEvaluation => {
+  const buildEvaluation = (content: string): ToolEvaluation => {
+    return {
+      content: content,
+      tool_name: toolCall.function.name,
+    };
   };
+
+  switch (toolCall.function.name) {
+    case "read_board_state": {
+      const board = readBoardState(gridState, gridNums);
+      const formatted = prettyPrintRows(board);
+
+      return buildEvaluation(formatted);
+    }
+    case "list_all_clues":
+      return buildEvaluation(JSON.stringify(listAllClues(clueList), null, 2));
+    case "fill_clue": {
+      const { direction, clue_number, answer } = toolCall.function.arguments;
+
+      const result = fillClue(
+        setCurrentClue,
+        setGridCorrectness,
+        gridState,
+        setGridState,
+        gridNums,
+        clueList,
+        direction as CrosswordClueDirection,
+        clue_number,
+        answer,
+      );
+
+      return buildEvaluation(result);
+    }
+    case "check_puzzle": {
+      const grid = checkPuzzle(
+        gridState,
+        gridNums,
+        answers,
+        setGridCorrectness,
+      );
+      const formatted = prettyPrintRows(grid);
+
+      return buildEvaluation(formatted);
+    }
+    default:
+      return buildEvaluation("Unknown tool call");
+  }
 };
