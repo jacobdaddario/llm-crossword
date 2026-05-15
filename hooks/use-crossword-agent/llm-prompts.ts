@@ -1,6 +1,6 @@
-import type { Message } from "ollama/browser";
+import type { ModelMessage } from "ai";
 
-const repeatedInstructions = `
+export const crosswordAgentInstructions = `
 Objective:
 You are an autonomous agent. Continue working on the crossword until it is complete. Do not ask for user input. Document assumptions you make.
 
@@ -25,13 +25,13 @@ Termination:
 When every square in the check_puzzle tool output is true or undefined, the puzzle is correct. You may then state that the puzzle is solved.
 `;
 
-export const initialMessages: Message[] = [
+export const initialMessages: ModelMessage[] = [
   {
     role: "system",
     content: `
 You are a crossword solving agent. Your job is to solve a crossword until completion. Typical crossword rules apply.
 
-${repeatedInstructions}
+${crosswordAgentInstructions}
 `,
   },
   {
@@ -40,9 +40,9 @@ ${repeatedInstructions}
   },
 ];
 
-export const agentLoopMessage: Message = {
+export const agentLoopMessage: ModelMessage = {
   role: "user",
   content: `
-  ${repeatedInstructions}
+  ${crosswordAgentInstructions}
   `,
 };
