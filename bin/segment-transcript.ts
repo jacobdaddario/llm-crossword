@@ -1,8 +1,8 @@
-import { generateText, type ModelMessage } from "ai";
-import { ollama } from "ai-sdk-ollama";
 import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
 import { readFile, writeFile } from "node:fs/promises";
 import { cwd } from "node:process";
+import type { Message } from "ollama/browser";
+import ollama from "ollama/browser";
 import { parseArgs } from "util";
 
 enum AgentSegmentType {
@@ -18,13 +18,6 @@ enum AgentSegmentType {
 type MessageSegments = {
   segmentType: AgentSegmentType;
   segmentContent: string;
-};
-
-type TranscriptMessage = {
-  role: string;
-  content: string;
-  thinking?: string;
-  tool_calls?: Array<{ function: { name: string } }>;
 };
 
 const SYSTEM_MESSAGE = `
@@ -69,7 +62,7 @@ const { values } = parseArgs({
   strict: true,
 });
 
-const transcript: TranscriptMessage[] = JSON.parse(
+const transcript: Message[] = JSON.parse(
   await readFile(`${cwd()}/experiments/${values.input}`, {
     encoding: "utf8",
   }),
@@ -101,20 +94,18 @@ const segmentedTranscript = await segments.reduce<Promise<MessageSegments[]>>(
   async (segmentedTranscriptsPromise, segment) => {
     const segmentedTranscripts = await segmentedTranscriptsPromise;
 
-    const categoryMessages: ModelMessage[] = [
-      { role: "system", content: SYSTEM_MESSAGE },
-      ...segmentedTranscripts.slice(-3).flatMap((segment) => [
-        { role: "user", content: segment.segmentContent } satisfies ModelMessage,
-        { role: "assistant", content: segment.segmentType } satisfies ModelMessage,
-      ]),
-      { role: "user", content: segment },
-    ];
-
-    const category = await generateText({
-      model: ollama("gemma3:12b"),
-      messages: categoryMessages,
+    const category = await ollama.chat({
+      model: "gemma3:12b",
+      messages: [
+        { role: "system", content: SYSTEM_MESSAGE },
+        ...segmentedTranscripts.slice(-3).flatMap((segment) => [
+          { role: "user", content: segment.segmentContent },
+          { role: "assistant", content: segment.segmentType },
+        ]),
+        { role: "user", content: segment },
+      ],
     });
-    const categoryContent = category.text.trim();
+    const categoryContent = category.message.content.trim();
 
     console.log({ segmentType: categoryContent, segmentContent: segment });
 
